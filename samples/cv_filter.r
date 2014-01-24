@@ -5,11 +5,12 @@ REBOL [
 	Rights:		"Copyright (c) 2012-2013 François Jouen. All rights reserved."
 	License:     "BSD-3 - https://github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
 ]
+
+;some improvements by Walid Yahia 2014 
 do %../opencv.r
 set 'appDir what-dir 
 
 fileName: to-string to-local-file join appDir "images/lena.jpg"
-probe fileName
 srcWnd: "Using cvTrackbar: ESC to close"
 dstWnd: "Filtering"
 tBar: "Filtre"
@@ -23,7 +24,7 @@ The argument  pos informs the new position of the slider.}
 
 
 ; CV_BLUR CV_GAUSSIAN CV_MEDIAN : OK 
-; CV_BLUR_NO_SCALE CV_BILATERAL : TBT see documentation
+; CV_BLUR_NO_SCALE CV_BILATERAL : OK;
 
 trackEvent: func [pos] [ 
 		;if odd? pos
