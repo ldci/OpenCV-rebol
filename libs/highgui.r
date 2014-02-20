@@ -2,7 +2,7 @@
 REBOL [
 	Title:		"OpenCV Binding: highgui"
 	Author:		"François Jouen"
-	Rights:		"Copyright (c) 2012-2013 François Jouen. All rights reserved."
+	Rights:		"Copyright (c) 2012-2014 François Jouen. All rights reserved."
 	License: 	"BSD-3 - https:;github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
 ]
 
@@ -46,6 +46,7 @@ CV_LOAD_IMAGE_ANYCOLOR:    4 ;?, any color
 CV_CVTIMG_FLIP:      		1
 CV_CVTIMG_SWAP_RB:   		2 
 CV_DEFAULT:			 		0
+
 ; playing with camera
 CV_CAP_ANY:      			0    ; autodetect
 CV_CAP_MIL:      			100   ; MIL proprietary drivers
@@ -96,7 +97,7 @@ CV_FOURCC_DEFAULT: 		-1 ; Use default codec for specified filename (Linux only) 
 cvInitSystem: make routine! [
 "this function is used to set some external parameters in case of X Window"
 	argc 		[integer!]
-	char** 		[string!]
+	char** 		[string!] ; pointer
 	return: 	[integer!]
 ] highgui "cvInitSystem"
 
@@ -109,7 +110,7 @@ cvStartWindowThread: make routine! [
 cvNamedWindow: make routine! [
 "create window: flags CV_DEFAULT(CV_WINDOW_AUTOSIZE)"
 	name 		[string!]
-	flags 		[integer!]
+	flags 		[integer!] ;CV_DEFAULT(CV_WINDOW_AUTOSIZE)
 	return: 	[integer!]
 ] highgui "cvNamedWindow"
 
@@ -144,13 +145,13 @@ cvMoveWindow: make routine! [
 cvGetWindowHandle: make routine! [
 "get native window handle (HWND in case of Win32 and Widget in case of X Window"
 	name 		[string!]
-	return: 	[int] ;
+	return: 	[int] ; return a pointer to HWD
 ] highgui "cvGetWindowHandle"
 
 cvGetWindowName: make routine! [
 "get name of highgui window given by its native handle"
-	name 		[string!]
-	return: 	[string!]
+	window_handle 	[int] ; void* pointer to handle
+	return: 		[string!]
 ] highgui "cvGetWindowName"
 
 ; cvCreateImage is defined in cxcore 
@@ -206,7 +207,7 @@ unless CV_LOAD_IMAGE_ANYDEPTH is specified images are converted to 8bit
 this function returns a pointer IplImage structure  (see cxtypes.r)
 Supported image formats: BMP, DIB, JPEG, JPG, JPE, PNG, PBM, SR, RAS, TIFF, TIF}
 	filename 		[string!]
-	flags 			[integer!]
+	flags 			[integer!] ;CV_DEFAULT(CV_LOAD_IMAGE_COLOR))
 	return: 		[struct! (first IplImage!)] ; returns an iplImage structure
 ] highgui "cvLoadImage"
 
@@ -214,7 +215,7 @@ Supported image formats: BMP, DIB, JPEG, JPG, JPE, PNG, PBM, SR, RAS, TIFF, TIF}
 cvLoadImageM: make routine! compose/deep/only [
 "this function returns a pointer CvMat structure  (see cxtypes.r)"
 	filename 		[string!]
-	iscolor 		[integer!]
+	iscolor 		[integer!] ;CV_DEFAULT(CV_LOAD_IMAGE_COLOR))
 	return: 		[struct! (first CvMat!)]
 	
 ] highgui "cvLoadImageM"
@@ -232,20 +233,19 @@ cvConvertImage: make routine! compose/deep/only [
 src and dst are CvArr! i.e a pointer to image. flags:CV_DEFAULT(0)}
 	src 			[struct! (first CvArr!)]
 	dst 			[struct! (first CvArr!)]
-	flags 			[integer!]
+	flags 			[integer!] ; CV_DEFAULT(0)
 	return:			[]
 ]highgui "cvConvertImage" 
 
 cvWaitKey: make routine! [
 "wait for key event infinitely (delay<=0) or for delay milliseconds"
-	delay 			[integer!]
+	delay 			[integer!] ; CV_DEFAULT(0)
 	return: 		[integer!]
 ] highgui "cvWaitKey"
  
 {****************************************************************************************
 *                         Working with Video Files and Cameras                          *
 \****************************************************************************************}
-
 
 
 cvCreateFileCapture: make routine! compose/deep/only [
@@ -286,10 +286,13 @@ cvQueryFrame: make routine! compose/deep/only [
 
 cvReleaseCapture: make routine! compose/deep/only [
 "stop capturing/reading and free resources"
-	capture 		[struct! (first int-ptr!)] ; requires double pointer to cvCapture
+	capture 		[struct! (first CvCapture!)] ; requires double pointer to cvCapture
 	return:			[]
 ]highgui "cvReleaseCapture"
 
+_cvReleaseCapture: func [capture] [
+	free-mem capture
+]
 
 
 cvGetCaptureProperty: make routine! compose/deep/only[
@@ -313,8 +316,8 @@ cvCreateVideoWriter: make routine! compose/deep/only[
 	filename 		[string!]
 	fourcc 			[integer!]
 	pfs 			[decimal!]
-	width           [integer!] ;cvSize
-    height          [integer!] ;cvSize
+	width           [integer!] ;cvSize/width
+    height          [integer!] ;cvSize/height
 	is_color 		[integer!] ;CV_DEFAULT(1))
 	return: 		[struct! (first CvVideoWriter!)] ; CvVideoWriter!
 ]highgui "cvCreateVideoWriter"	
@@ -324,12 +327,17 @@ cvWriteFrame: "cvWriteFrame" make routine! compose/deep/only[
 "write frame to video file"
 	writer 			[struct! (first CvVideoWriter!)] ;CvVideoWriter!
 	image 			[struct! (first IplImage!)]
-	return:			[]
+	return:			[integer!]
 ] highgui	"cvWriteFrame"
 
 
 cvReleaseVideoWriter: make routine! compose/deep/only [
 "close video file writer" 
-	writer 			[struct! (first int-ptr!)] ;CvVideoWriter!
+	writer 			[struct! (first CvVideoWriter!)] ;double pointer CvVideoWriter!
 	return:			[]
 ]highgui "cvReleaseVideoWriter"
+
+_cvReleaseVideoWriter: func [] [
+	free-mem
+]
+

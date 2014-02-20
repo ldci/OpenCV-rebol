@@ -28,10 +28,9 @@ The argument  pos informs the new position of the slider.}
 
 trackEvent: func [pos] [ 
 		;if odd? pos
-		if (pos and 1) = 1
-		 [
-						cvSmooth src dst CV_GAUSSIAN pos 1 0.0 0.0 
-						cvShowImage dstWnd dst
+		if (pos and 1) = 1 [
+			cvSmooth src dst CV_MEDIAN pos 1 0.0 0.0 
+			cvShowImage dstWnd dst
 		]
 ]
 
@@ -41,10 +40,6 @@ loadImage: does [
 	cvNamedWindow dstWnd CV_WINDOW_AUTOSIZE
 	src: cvLoadImage fileName CV_LOAD_IMAGE_UNCHANGED 
 	dst: cvCloneImage src
-	&src: struct-address? src
-	&dst: struct-address? dst
-	&&src: make struct! int-ptr! reduce [struct-address? src]
-	&&dst: make struct! int-ptr! reduce [struct-address? dst]
 	
 	cvMoveWindow srcWnd 25 100
 	cvMoveWindow dstWnd 540 120
@@ -58,8 +53,8 @@ loadImage: does [
 loadImage
 cvwaitKey 0
 free-mem &pos
-cvReleaseImage &&src
-cvReleaseImage &&dst
+_cvReleaseImage src
+_cvReleaseImage dst
 cvDestroyWindow srcWnd
 cvDestroyWindow dstWnd
 

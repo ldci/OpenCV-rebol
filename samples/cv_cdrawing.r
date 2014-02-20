@@ -2,7 +2,7 @@
 REBOL [
 	Title:		"OpenCV Tests: Drawing"
 	Author:		"François Jouen"
-	Rights:		"Copyright (c) 2012-2013 François Jouen. All rights reserved."
+	Rights:		"Copyright (c) 2012-2014 François Jouen. All rights reserved."
 	License:    "BSD-3 - https://github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
 ]
 
@@ -112,7 +112,7 @@ for i 1 number 1  [
 	thickness: random 9 
 	if thickness  < 2 [thickness: -1]
 	color: tocvFloatRGB random 255.255.255 
-	cvEllipse image center/x center/y axes/x axes/y angle angle - 100 angle + 200 color/1 color/2 color/3 0 thickness lineType 0
+	cvEllipse image center/x center/y axes/x axes/y angle angle - 180 angle + 200 color/1 color/2 color/3 0 thickness lineType 0
 	cvShowImage wndname image
 ]
 

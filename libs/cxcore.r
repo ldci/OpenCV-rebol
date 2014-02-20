@@ -77,8 +77,12 @@ cvReleaseImageHeader: make routine! compose/deep/only[
 
 cvReleaseImage: make routine! compose/deep/only[
 "Releases IPL image header and data"
-	image		[struct! (first int-ptr!)] ; double pointer to IplImage** image	
+	image		[struct! (first IplImage!)] ; double pointer to IplImage** image	
 ] cxcore "cvReleaseImage"
+
+_cvReleaseImage: func [image] [
+	free-mem image
+]
 
 cvCloneImage: make routine! compose/deep/only[
 "Creates a copy of IPL image (widthStep may differ) "
@@ -666,7 +670,7 @@ the array can not be represented as a matrix}
 cvGetRawData: make routine! compose/deep/only [
 "retrieves raw data of CvMat, IplImage or CvMatND"
 	arr				[struct! (first CvArr!)]
-	data			[struct! (first int-ptr!)] ;uchar** pointer
+	data			[struct! (first char*)] ;uchar** pointer
 	step			[struct! (first int-ptr!)]; int-ptr! CV_DEFAULT(NULL)
 	roi_size		[struct! (first CvSize!)];CV_DEFAULT(NULL)
 ] cxcore "cvGetRawData"
@@ -674,8 +678,14 @@ cvGetRawData: make routine! compose/deep/only [
 cvGetSize: make routine! compose/deep/only [
 "Returns width and height of array in elements"
 	arr				[struct! (first CvArr!)]
-	return:			reduce [integer! integer!] ; CvSize not a pointer
+	return:			[integer! integer!]; CvSize not a pointer	
 ] cxcore "cvGetSize"
+
+
+_cvGetSize: func [arr] [
+	reduce [arr/width arr/height]
+]
+ 
 
 cvCopy: make routine! compose/deep/only [
 "copies source array to destination array"

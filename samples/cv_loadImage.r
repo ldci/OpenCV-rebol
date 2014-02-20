@@ -2,13 +2,14 @@
 REBOL [
 	Title:		"OpenCV Tests"
 	Author:		"François Jouen"
-	Rights:		"Copyright (c) 2012-2013 François Jouen. All rights reserved."
-	License:     "BSD-3 - https://github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
+	Rights:		"Copyright (c) 2012-2014 François Jouen. All rights reserved."
+	License:    "BSD-3 - https://github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
 ]
 do %../opencv.r
 set 'appDir what-dir 
 lena:  to-string to-local-file join appDir "images/lena.tiff"
-probe lena
+
+
 ; function pointer that can be called by TrackBar callback 
 trackEvent: func [ pos [integer!] ][print ["Trackbar position is : " pos]] 
 
@@ -42,12 +43,25 @@ cvSetMouseCallBack windowsName :mouseEvent none
 
 img: cvLoadImage lena CV_LOAD_IMAGE_COLOR
 &img: struct-address? img
-&&img: make struct! int-ptr! reduce [&img] 
 
+copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
+;cvZero copie
+	
+&step: make struct! int-ptr! reduce [0]
+&size: make struct! cvSize! reduce [0 0]
+		
+data: make binary! img/imageSize * sizeof 'integer!
+&data: string-address? data
+&&data: make struct! int-ptr! reduce [&data]
+cvGetRawData img &&data &step &size
 
-;print [windowsName " is " img/width  "x" img/height]
+data: to-binary address-to-string &&data/int
+set-memory copie/imageData data
+free-mem data
 
 cvShowImage windowsName img ; show image
+cvNamedWindow "copie" CV_WINDOW_AUTOSIZE
+cvShowImage "copie" copie
 
 cvWaitKey 500 ;wait 500 ms
 cvResizeWindow windowsName 256 256 ; resize window
@@ -66,7 +80,7 @@ print ["done! Bye "]
 
 cvDestroyWindow windowsName       
 free-mem &p	;release trackbar pointer
-cvReleaseImage &&img ; release image pointer
+_cvReleaseImage img ; release image pointer
 
 
 

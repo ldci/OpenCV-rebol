@@ -2,7 +2,7 @@
 REBOL [
 	Title:		"OpenCV Tests"
 	Author:		"François Jouen"
-	Rights:		"Copyright (c) 2012-2013 François Jouen. All rights reserved."
+	Rights:		"Copyright (c) 2012-2014 François Jouen. All rights reserved."
 	License:    "BSD-3 - https://github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
 ]
 
@@ -33,7 +33,7 @@ OpenClose: func [pos][
 	element: cvCreateStructuringElementEx (an * 2) + 1 (an * 2) + 1 an an element_shape 0 
 	&&element: make struct! int-ptr! reduce [struct-address? element] ; a double pointer
 	either n < 0 [cvErode src dst element 1 cvDilate dst dst element 1] 
-	             [cvDilate src dst element 1 cvErode dst dst element 1]
+	            [cvDilate src dst element 1 cvErode dst dst element 1]
 	
 	cvReleaseStructuringElement &&element
 	cvShowImage "Open/Close" dst
@@ -100,7 +100,7 @@ until [
 		c = 27 
 ]
 
-free-mem &openClosePos	;release trackbar pointer
+free-mem &openClosePos		;release trackbar pointer
 free-mem  &erodeDilatePos	;release trackbar pointer
 cvReleaseImage &&src 		;release image pointer
 cvReleaseImage &&dst 		;release image pointer
