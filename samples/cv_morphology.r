@@ -8,7 +8,16 @@ REBOL [
 
 do %../opencv.r
 set 'appDir what-dir 
-filename: to-string to-local-file join appDir"images/baboon.jpg"
+;picture: to-string to-local-file join appDir"images/baboon.jpg"
+
+print "Select a picture"
+
+
+temp: request-file 
+picture: to-string to-local-file to-string temp
+
+
+
 element_shape: CV_SHAPE_RECT;
 max_iters: 10;
 openClosePos: erodeDilatePos: max_iters 
@@ -68,11 +77,9 @@ helpF: does [
 ]
 
 
-src: cvLoadImage filename CV_LOAD_IMAGE_UNCHANGED 
+src: cvLoadImage picture CV_LOAD_IMAGE_UNCHANGED 
 dst: cvCloneImage src
 
-&&src: make struct! int-ptr! reduce [struct-address? src] 
-&&dst: make struct! int-ptr! reduce [struct-address? dst] 
 
 ;create windows for output images
 cvNamedWindow "Open/Close" CV_WINDOW_AUTOSIZE
@@ -102,7 +109,7 @@ until [
 
 free-mem &openClosePos		;release trackbar pointer
 free-mem  &erodeDilatePos	;release trackbar pointer
-cvReleaseImage &&src 		;release image pointer
-cvReleaseImage &&dst 		;release image pointer
+cvReleaseImage src 		;release image pointer
+cvReleaseImage dst 		;release image pointer
     
 

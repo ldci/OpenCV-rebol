@@ -2,7 +2,7 @@
 REBOL [
 	Title:		"OpenCV Tests: Adaptative Threshold"
 	Author:		"François Jouen"
-	Rights:		"Copyright (c) 2012-2013 François Jouen. All rights reserved."
+	Rights:		"Copyright (c) 2012-2014 François Jouen. All rights reserved."
 	License:     "BSD-3 - https://github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
 ]
 do %../opencv.r
@@ -29,20 +29,17 @@ loadImage: does [
 	if not none? temp [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
-		    ;Read in gray image
-			Igray: cvLoadImage filename CV_LOAD_IMAGE_GRAYSCALE
-			&&Igray: make struct! int-ptr! reduce [struct-address? Igray] 
-			
-			clone: cvLoadImage filename CV_LOAD_IMAGE_COLOR ; pour avoir 3 channels
-			&&clone: make struct! int-ptr! reduce [struct-address? clone]
-			
-			cvtoRebol/fit clone rimage1
-			
+			;read src image
+			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR;  force 3 channels reading  
 			;Create the grayscale output images
+			Igray: cvCreateImage src/width src/height IPL_DEPTH_8U 1
+			cvCvtColor src Igray CV_BGR2GRAY
 			Iat: cvCreateImage Igray/width Igray/height IPL_DEPTH_8U 1
-			&&Iat: make struct! int-ptr! reduce [struct-address? Iat] 
-			
+			;make a rebol image
+			cvtoRebol  src rimage1
 			isFile: true
+			;cvNamedWindow "src" CV_WINDOW_AUTOSIZE 
+			;cvShowImage "src" src 
 		]
 		[Alert "Not an image" ]
 	]
@@ -52,14 +49,14 @@ loadImage: does [
 
 showImages: does [
  	cvAdaptiveThreshold Igray Iat 255 adaptive_method adaptive_threshold_type block_size _offset
- 	cvConvertImage iat clone 0
-	cvtoRebol/fit clone rimage2
+ 	cvConvertImage iat src none
+	cvtoRebol src rimage2
 ]
 
 release: does [
-	cvReleaseImage &&Igray
-	cvReleaseImage &&Iat
-	cvReleaseImage &&clone
+	cvReleaseImage Igray
+	cvReleaseImage Iat
+	cvReleaseImage src
 ]
 
 

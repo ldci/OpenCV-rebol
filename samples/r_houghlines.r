@@ -38,7 +38,7 @@ HProba: does [
         pt1/y: to-integer reverse get-memory line + 4 4  
         pt2/x: to-integer reverse get-memory line + 8 4
 		pt2/y: to-integer reverse get-memory line + 12 4
-        ;print [&line i " : " pt1/x " " pt1/y " " pt2/x " " pt2/y]
+        ;print [line i " : " pt1/x " " pt1/y " " pt2/x " " pt2/y]
         cvLine colorDst pt1/x pt1/y pt2/x pt2/y 0.0 0.0 255.0 0.0 3 CV_AA 0
         i: i + 1
         i = lines/total
@@ -57,6 +57,9 @@ HNormal: func [] [
         v2: reverse get-memory line + 4 4 ; OK  if not Using an Intel processor do not use reverse
         rho: first bin-to-float v1				;cast to float OK
         theta:  first bin-to-float v2           ; cast to float! OK
+        
+        ; to-decimal trim to-string
+      
       
         a: cosine/radians theta                  ;OK
         b: sine/radians theta
@@ -83,10 +86,8 @@ loadImage: does [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
 			src: cvLoadImage filename CV_LOAD_IMAGE_GRAYSCALE ; 
-			&&src: make struct! int-ptr! reduce [struct-address? src] 
 			colorSrc: cvLoadImage filename  CV_LOAD_IMAGE_COLOR
-			&&colorSrc: make struct! int-ptr! reduce [struct-address? colorSrc]
-			cvtoRebol/fit  colorSrc rimage1 
+			cvtoRebol  colorSrc rimage1 
 			rimage2/image: load ""
 			show rimage2
 			isFile: true
@@ -99,16 +100,12 @@ loadImage: does [
 processImage: does [
 	t1: now/time/precise
 	dst: cvCreateImage src/width src/height IPL_DEPTH_8U 1
-    &&dst: make struct! int-ptr! reduce [struct-address? dst]
-    
     colorDst: cvCreateImage src/width src/height IPL_DEPTH_8U 3
-    &&colorDst: make struct! int-ptr! reduce [struct-address? colorDst]
-    
     cvCanny src dst 50.0 200.0 3
     cvCvtColor dst colorDst CV_GRAY2BGR
     
     storage: cvCreateMemStorage 0
-    &&storage: make struct! int-ptr! reduce [struct-address? storage]
+   
    
     switch flag/text [
 		"STANDARD" [HNormal]
@@ -116,7 +113,7 @@ processImage: does [
 	]
   	
 
-    cvtoRebol/fit  colorDst rimage2
+    cvtoRebol  colorDst rimage2
     t2: now/time/precise
     sb/text: join " Done in " [to-string round/to t2 - t1 0.001 " sec"]
     show sb
@@ -130,22 +127,21 @@ mainwin: layout/size [
 	space 4x0
 	at 5x5 
 	btn 80 "Load Image" [loadImage]
-	btn 60 "Process" [if isFile [processImage]]
-	txt 60 "Method" flag: choice 100 data ["STANDARD" "PROBABILISTIC"]
+	txt 60 "Method" flag: choice 100 black data ["STANDARD" "PROBABILISTIC"] [if isFile [processImage]]
 	txt "Distance resolution" dtext: field 40 to-string distance [if error? try [distance: to-decimal dtext/text] [distance: 1.0]]
 	txt "Angle/radian" atext: field 60 to-string round/to angle .001 [if error? try [angle: to-decimal atext/text] [angle: CV_PI / 180.0]]
 	txt "Threshold" ttext: field 40 to-string threshold [if error? try [threshold: to-integer ttext/text] [threshold: 50]]
 	txt "Param Hough Proba" p1text: field 40 to-string param1 [if error? try [param1: to-decimal p1text/text] [param1: 50.0]]
 	                        p2text: field 40 to-string param2 [if error? try [param2: to-decimal p2text/text] [param2: 10.0]]
 	
+	btn 60 "Process" [if isFile [processImage]]
 	
-	
-	at 985x5 btn 50 "Quit" [if isFile [cvReleaseImage &&src cvReleaseImage &&dst 
-	                          cvReleaseImage &&colorSrc cvReleaseImage &&colorDst] 
+	at 985x5 btn 50 "Quit" [if isFile [cvReleaseImage src cvReleaseImage dst 
+	                          cvReleaseImage colorSrc cvReleaseImage colorDst free-mem storage] 
 	                          quit]
 	space 0x0
-    at 5x30 rimage1: image 512x512 frame blue
-	at 525x30 rimage2: image 512x512 frame blue
+    at 5x30 rimage1: image 512x512 black frame blue
+	at 525x30 rimage2: image 512x512 black frame blue
 	at 5x545 sb: info 1035
 	
 	] 1045x580

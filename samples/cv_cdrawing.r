@@ -34,8 +34,6 @@ CV_RGB 255 255 0
 
 image: cvCreateImage width height IPL_DEPTH_32F 3; 
 
-&image: struct-address? image
-&&image: make struct! int-ptr! reduce [&image] 
 
 pt1: make struct! CvPoint! none
 pt2: make struct! CvPoint! none
@@ -203,14 +201,12 @@ pt1/x: (width - &text_size/width) / 2
 pt1/y: (height + &text_size/height) / 2
 
 image2: cvCloneImage image
-&image2: struct-address? image2
-&&image2: make struct! int-ptr! reduce [&image2] 
 
 
 print ["Testing Images substraction "]
 for i 1 255 1 [
     v: cvScalarAll i
-    cvAddS &image2 negate v/v0 negate v/v1 negate v/v2 negate v/v3 &image 0
+    cvAddS image2 v image none
     color: tocvFloatRGB to-tuple reduce [i  i  255]
     cvPutText image "OpenCV forever!" pt1/x pt1/y &font color/1 color/2 color/3  0
     cvShowImage wndname image
@@ -227,8 +223,8 @@ print ["All tests done in " t2 - t1 " sec"]
 print ["Any key to close"]
 
 cvwaitKey 0
-cvReleaseImage &&image
-cvReleaseImage &&image2
+cvReleaseImage image
+cvReleaseImage image2
 cvDestroyWindow wndname
 
 

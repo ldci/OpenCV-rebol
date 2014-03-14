@@ -33,7 +33,6 @@ ON_SEGMENT: does [
 filename: to-string to-local-file to-string request-file ; to-string join appDir "/images/apple.jpg"
 wait 0.1
 image: cvLoadImage filename CV_LOAD_IMAGE_UNCHANGED 
-&&image: make struct! int-ptr! reduce [struct-address? image] 
 
 
 cvNamedWindow "Source" CV_WINDOW_AUTOSIZE ;0 
@@ -49,10 +48,10 @@ image/width: image/width and val
 image/height: image/height and val
 
 image0: cvCloneImage image
-&&image0: make struct! int-ptr! reduce [ struct-address? image0]
-;image1: cvCloneImage image
-image1: cvCreateImage image/width image/height IPL_DEPTH_8U 3
-&&image1: make struct! int-ptr! reduce [ struct-address? image1]
+image1: cvCloneImage image
+
+;image1: cvCreateImage image/width image/height IPL_DEPTH_8U 3
+
 
 sthreshold1: cvCreateTrackbar "Threshold1" "Segmentation" pthreshold1 255 :ON_SEGMENT 
 sthreshold2: cvCreateTrackbar "Threshold2" "Segmentation" pthreshold2 255 :ON_SEGMENT 
@@ -66,9 +65,9 @@ cvWaitKey(0);
 
 cvDestroyWindow "Segmentation"
 cvDestroyWindow "Source"
-cvReleaseImage &&image
-cvReleaseImage &&image0
-cvReleaseImage &&image1
+cvReleaseImage image
+cvReleaseImage image0
+cvReleaseImage image1
 cvReleaseMemStorage &&storage 
 
 

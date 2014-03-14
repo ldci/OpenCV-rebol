@@ -526,7 +526,7 @@ cvCalcEMD2: make routine! compose/deep/only [
 cvFindContours: make routine! compose/deep/only [
 	image 			[struct! (first CvArr!)]
 	storage 		[struct! (first CvMemStorage!)]
-	first_contour	[struct!(first CvSeq!)]
+	first_contour	[struct!(first CvSeq**)]
 	;first_contour	[integer!]; double pointer to CvSeq**
 	header_size		[integer!];CV_DEFAULT(sizeof(CvContour))
 	mode			[integer!];CV_DEFAULT(CV_RETR_LIST)

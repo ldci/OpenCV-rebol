@@ -25,7 +25,7 @@ ON_SEGMENT: does [
     show [ct1 ct2]
     if isFile [
     	cvPyrSegmentation image0 image1 storage &comp level threshold1 + 1 threshold2 + 1
-    	cvtoRebol/fit image1 rimage2
+    	cvtoRebol image1 rimage2
     ]
     recycle
 ]
@@ -40,9 +40,8 @@ loadImage: does [
 		    ; load image
 			image: cvLoadImage filename CV_LOAD_IMAGE_COLOR;CV_LOAD_IMAGE_UNCHANGED
 			
-			&&image: make struct! int-ptr! reduce [struct-address? image] 
 			;show rebol image
-			cvtoRebol/fit image rimage1 
+			cvtoRebol image rimage1 
 			
 			imSize/text: join image/width [ " " image/height] 
 			show imSize
@@ -54,12 +53,10 @@ loadImage: does [
 			show imSizeC
 			
 			image0: cvCloneImage image
-			&&image0: make struct! int-ptr! reduce [struct-address? image0]
 			
 			
 			; better create output than cvCloneImage image
 			image1: cvCreateImage image/width image/height IPL_DEPTH_8U 3
-			&&image1: make struct! int-ptr! reduce [struct-address? image1]
 			
 			
 			storage: cvCreateMemStorage block_size
@@ -77,9 +74,9 @@ loadImage: does [
 
 release: does [
 	if isFile [
-		cvReleaseImage &&image
-		cvReleaseImage &&image0
-		cvReleaseImage &&image1
+		cvReleaseImage image
+		cvReleaseImage image0
+		cvReleaseImage image1
 		cvReleaseMemStorage &&storage 
 	]
 	

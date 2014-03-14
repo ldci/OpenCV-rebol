@@ -1,0 +1,42 @@
+make object! [
+    page: 255.255.240
+    text: 64.64.64
+    theme-light: 195.221.127
+    theme-dark: 136.187.0
+    state-light: 255.204.127
+    state-dark: 255.153.0
+    outline-light: 204.204.204
+    outline-dark: 136.136.136
+] make object! [
+    cell: 4
+    edge: 1
+    font: 12
+    font-height: 15
+    gap: 2
+    line: 20
+    margin: 4
+    slider: 16
+] make object! [
+    action-on-enter: [drop-list edit-list field password spinner
+    ]
+    action-on-tab: [field
+    ]
+    caret-on-focus: [area
+    ]
+    cyclic: [group-box panel sheet tab-panel
+    ]
+    hilight-on-focus: [edit-list field password spinner
+    ]
+    tabbed: [area button drop-list drop-tree edit-list field grid password spinner
+    ]
+] make object! [
+    arrows-together: true
+    radius: 5
+    font: "verdana"
+    fonts: ["arial" "times"
+    ]
+    splash-delay: 1
+    tooltip-delay: 0:00:01
+    webdings: false
+    window: none
+]

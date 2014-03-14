@@ -130,6 +130,7 @@ string-address?: func [
 		ptr/int
 	]
 
+
 address-to-string: func [
 		{get a copy of the nul-terminated string at the given address}
 		address [integer!]
@@ -300,43 +301,101 @@ __convert: func [
 
 
 
-; From CvImage to Rebol Image 24 bit (3 * 8 + alpha Channel) 
-; if CvImage nChannels = 1  use /channel raffinement
 
 
-cvSavetoRebol: func [src dest /channel/fit/flip] [
+
+cvSavetoRebol: func [src dest] [
  cvSaveImage to-string to-local-file join appDir "images/tmp.jpg" src
  dest/image: load to-file join appDir "images/tmp.jpg"
  show dest
 ]
 
 
-cvtoRebol: func [src dest /channel/fit/flip] [
-	data: get-memory src/imageData src/imageSize 
+; From CvImage to Rebol Image 24 bit (3 * 8 + alpha Channel) 
+; if CvImage nChannels = 1  use /channel raffinement
+
+cvtoRebol: func [src dest] [
+    ;  get data from image with cvRawdata	
+	step: make struct! int-ptr! reduce [src/widthStep]
+	&step: struct-address? step
+	data: make struct! int-ptr! reduce [src/imageSize]
+	&data: struct-address? data 
+	roi: make struct! cvSize! reduce [0 0]
+	cvGetRawData src &data &step roi
+	&data: data/int          					; get the pointer adress in return
+	data: get-memory  &data src/imageSize		;get the data
 	
-  	if channel [
+	; rebol version slower
+	;data: get-memory src/imageData src/imageSize 
+	
+  	{if src/nChannels = 1 [
    			fl: flash "Converting 1 channel cvImage to 4 channels Rebol image"
    			wait 0.1
         	bit8: make binary! 0
             foreach v data [ insert/dup bit8 to-char v 3] ; create 3 bytes for 1 channel cvImage
             data: reverse bit8 
             unview/only fl
-    ]      
+    ]  }
+       
     data:  reverse data
-   
     dest/image: make image! reduce [as-pair (src/width) (src/height) data]
-    ; little or big endian ?
-    if endian? = 'little [either fit [dest/effect: [fit flip 1x1]]  [dest/effect: [flip 1x1]]]
-    if endian? = 'big [either fit [dest/effect: [fit ]]  [dest/effect: [ ]]]
+    dest/effect: [fit flip 1x1]
 	show dest
-	recycle
 ]  
 
-cam2Rebol: func [src /local data im] [
-	rgb: get-memory src/imageData src/imageSize 
-	rgb: reverse rgb
-	im: make image! reduce [as-pair (src/width) (src/height) rgb]
-]
+
+_cvtoRebol: func [src dest] [
+	if error? try [nChannels: src/nChannels w: src/width h: src/height
+	] [nChannels: 4 w: h: 512]
+	
+	imageNC: cvCreateImage w h IPL_DEPTH_8U nChannels
+	
+	;and makes images for each channel in 4 channels 
+	s0: cvCreateImage w h IPL_DEPTH_8U 1 ; b 
+	s1: cvCreateImage w h IPL_DEPTH_8U 1 ; g
+	s2: cvCreateImage w h IPL_DEPTH_8U 1 ; r
+	s3: cvCreateImage w h IPL_DEPTH_8U 1 ; a
+	
+	
+	if any [nChannels = 1 nChannels = 4] [cvCloneImage src imageNC]
+	
+	if any [nChannels = 2 nChannels = 3] [
+		;split original source image
+		cvSplit src s0 s1 s2 s3
+		; and merge to 4 channel Image
+		cvMerge s0 s1 s2 s3 imageNC
+	]
+
+	; for testing merged image: OK
+	cvNamedWindow "test" CV_WINDOW_AUTOSIZE
+	cvShowImage "test" imageNC
+	
+
+	;  get data from image with cvRawdata	
+	step: make struct! int-ptr! reduce [imageNC/widthStep]
+	&step: struct-address? step
+	data: make struct! int-ptr! reduce [imageNC/imageSize]
+	&data: struct-address? data 
+	roi: make struct! cvSize! reduce [0 0]
+
+	cvGetRawData imageNC &data &step roi
+	&data: data/int          						; get the pointer adress in return
+	data: get-memory  &data imageNC/imageSize		;get the data
+	
+    ; reverse BGRA order to RBGA
+    data:  reverse data
+    dest/image: make image! reduce [as-pair (src/width) (src/height) data]
+    dest/effect: [fit flip 1x1]
+	show dest
+	cvReleaseImage s0
+	cvReleaseImage s1
+	cvReleaseImage s2 
+	cvReleaseImage s3 
+	cvReleaseImage src 
+	cvReleaseImage imageNC
+	
+]  
+
 
 
 

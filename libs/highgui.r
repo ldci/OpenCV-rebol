@@ -283,14 +283,15 @@ cvQueryFrame: make routine! compose/deep/only [
 	return: 		[struct! (first IplImage!)] ; returns an iplImage structure
 ] highgui "cvQueryFrame" 
    
-
-cvReleaseCapture: make routine! compose/deep/only [
+; orginal OPenCV
+cvReleaseCapture_: make routine! compose/deep/only [
 "stop capturing/reading and free resources"
 	capture 		[struct! (first CvCapture!)] ; requires double pointer to cvCapture
 	return:			[]
 ]highgui "cvReleaseCapture"
 
-_cvReleaseCapture: func [capture] [
+;Rebol version : better 
+cvReleaseCapture: func [capture] [
 	free-mem capture
 ]
 
@@ -331,13 +332,13 @@ cvWriteFrame: "cvWriteFrame" make routine! compose/deep/only[
 ] highgui	"cvWriteFrame"
 
 
-cvReleaseVideoWriter: make routine! compose/deep/only [
+cvReleaseVideoWriter_: make routine! compose/deep/only [
 "close video file writer" 
 	writer 			[struct! (first CvVideoWriter!)] ;double pointer CvVideoWriter!
 	return:			[]
 ]highgui "cvReleaseVideoWriter"
 
-_cvReleaseVideoWriter: func [] [
-	free-mem
+cvReleaseVideoWriter: func [writer] [
+	free-mem writer
 ]
 

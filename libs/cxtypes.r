@@ -40,14 +40,22 @@ set 'CV_LOG2 0.69314718055994530941723212145818
 
 
 CV_SWAP: func [a [number!] b [number!] c [number!] /local v1 v2 v3] [
-		v1: b
-		v2: c
-		v3: a
-		return [v1 v2 v3]
+	v1: b
+	v2: c
+	v3: a
+	return [v1 v2 v3]
 ]
 ; for MIN and MAX use Rebol functions 
+CV_MIN: func [a [number!] b [number!]  /local val ] [
+	either (a > b) [b] [a]
+]
+
+CV_MAX: func [a [number!] b [number!]  /local val ] [
+	either (a < b) [b] [a]
+]
 
 ;/* min & max without jumps */
+
 CV_IMIN: func [a [number!] b [number!]  /local val ]
 	[ either a < (b - 1) [val: 1] [val: 0]
 	return [a or (b or a) and val]
@@ -85,8 +93,6 @@ cvIsNaN: func [value] [number? value]
 
 ;is infinite? 
 
-
-
 cvIsInf: func [value [decimal!] /local result] [
         result: 0
 		; to be done
@@ -98,11 +104,11 @@ cvIsInf: func [value [decimal!] /local result] [
 cvRNG: func [seed] [random/seed seed] 
 
 cvRandInt: func [val [integer!]] [random val]
-cvRandReal: func ["return a decimal value beween 0 and 1. Base 16 bit" ] [
+cvRandReal: func [] [
+"return a decimal value beween 0 and 1. Base 16 bit"
 	x: random power 2 16
 	return x / power 2 16
 ]
-
 
 
 ;/****************************************************************************************\
@@ -159,11 +165,11 @@ IplTileInfo!: make struct! compose/deep/only [
 
 ; basic IPL image structure
 IplROI!: make struct! [
-    coi 		[integer!] ;0 - no COI (all channels are selected), 1 - 0th channel is selected ..
-    xOffset 	[integer!]
-    yOffset 	[integer!]
-    width		[integer!]
-    height		[integer!]
+    coi 				[integer!] ;0 - no COI (all channels are selected), 1 - 0th channel is selected ..
+    xOffset 			[integer!]
+    yOffset 			[integer!]
+    width				[integer!]
+    height				[integer!]
 ] none
 
 
@@ -180,12 +186,12 @@ IplImage!: make struct! compose/deep/only[
     align 				[integer!]							; Alignment of image rows (4 or 8).OpenCV ignores it and uses widthStep instead.
     width 				[integer!]							; Image width in pixels
     height 				[integer!]							; Image height in pixels. `
-    roi					[int]; [struct! (first IplROI! )]          ; Image ROI. If NULL, the whole image is selected  we absolutely need  a pointer to IplRoi! structure when using routines with a ROI
-    maskROI 			[int]								; Must be NULL [0]. IplImage! : pointer to maskROI if any
-    imageId 			[int]								; "           " 
+    roi					[int]; [struct! (first IplROI! )]   ; Image ROI. If NULL, the whole image is selected  we absolutely need  a pointer to IplRoi! structure when using routines with a ROI
+    maskROI 			[int]; [struct! (first IplImage!)]	; Must be NULL [0]. IplImage! : pointer to maskROI if any
+    imageId 			[int] ;[void*]						; "           " 
     tileInfo 			[int] ;[struct! (first IplTileInfo! )]		; [int]; here also"           "
     imageSize 			[integer!]							; Image data size in bytes
-    imageData 			[int]								; Pointer to aligned image data.     
+    imageData 			[int]; [char*]						; Pointer to aligned image data.     
     widthStep 			[integer!]							; Size of aligned image row in bytes.    
     BorderMode 			[integer!]							; Ignored by OpenCV.                     
     BorderConst 		[integer!]							; Ditto.                                
@@ -193,13 +199,12 @@ IplImage!: make struct! compose/deep/only[
 ] none 
 
 
-
 IplConvKernel!: make struct! [
 	nCols 				[integer!]
     nRows 				[integer!]
     anchorX 			[integer!]
     anchorY 			[integer!]
-    values 				[int]
+    values 				[int]    							; pointer to int array
     nShiftR 			[integer!]
 ] none
 
@@ -208,7 +213,7 @@ IplConvKernelFP!: make struct! [
     nRows 				[integer!]
     anchorX 			[integer!]
     anchorY 			[integer!]
-    values 				[double]
+    values 				[int]								; pointer to float array
 ] none
 
 IPL_IMAGE_HEADER: 		1
@@ -217,25 +222,40 @@ IPL_IMAGE_ROI:    		4
 
 ;/* extra border mode */
 IPL_BORDER_REFLECT_101:  4
-IPL_IMAGE_MAGIC_VAL:  	[size? IplImage!]
+IPL_IMAGE_MAGIC_VAL:  	[length? third IplImage!]
 CV_TYPE_NAME_IMAGE: 	"opencv-image"
 IPL_DEPTH_64F:  		64 			; for storing double-precision floating point data in IplImage's
 
-CV_IS_IMAGE_HDR:		[not none? IplImage! and IplImage!/nSize = size? IplImage!]
-CV_IS_IMAGE:			[not none? IplImage!/imageData] 
+CV_IS_IMAGE_HDR: func [img /local val] [
+    val: 0
+    size: (length? third img) + 24
+    if not none? img [val: 1]
+    if (img/nSize = size) [val: val + 1]
+    either val >= 1 [true] [false]  
+]
+
+CV_IS_IMAGE: func [img /local hdr data] [
+	data: hdr: false
+	if not none? img/imageData [data: true]
+	hdr: CV_IS_IMAGE_HDR img 
+    either (hdr AND data) [true] [false]
+]
+
 
 ;for storing double-precision floating point data in IplImage's
 IPL_DEPTH_64F:  		64
 
 ;/* get reference to pixel at (col,row), for multi-channel images (col) should be multiplied by number of channels */
-CV_IMAGE_ELEM: 			[IplImage!/imageData + IplImage!/widthStep  * row * col]
+CV_IMAGE_ELEM: func [image elemtype row col] [
+    get-memory image/imageData + (image/widthStep  * row * col) sizeof to-word type? elemtype
+]
 
 {/****************************************************************************************\
 *                                  Matrix type (CvMat)                                   *
 \****************************************************************************************/}
 CV_CN_MAX: 				64
 CV_CN_SHIFT: 			3
-CV_DEPTH_MAX: 			shift/left 1 CV_CN_SHIFT ; OK 8
+CV_DEPTH_MAX: 			(shift/left 1 CV_CN_SHIFT) ; OK 8
 CV_8U: 					0
 CV_8S: 					1
 CV_16U: 				2
@@ -245,9 +265,12 @@ CV_32F: 				5
 CV_64F: 				6
 CV_USRTYPE1: 			7
 
-CV_MAKETYPE: func [depth [integer!]cn [integer!]] [(depth + cn - 1) shift/left 1 CV_CN_SHIFT]
+CV_MAT_DEPTH_MASK: 		CV_DEPTH_MAX - 1
+CV_MAT_DEPTH: func [flags] [flags and CV_MAT_DEPTH_MASK]
+CV_MAKETYPE: func [depth [integer!] cn [integer!]] [(CV_MAT_DEPTH depth + cn - 1) shift/left 1 CV_CN_SHIFT]
 
-;#define CV_MAKE_TYPE CV_MAKETYPE
+;alias 'CV_MAKETYPE "CV_MAKE_TYPE"
+
 CV_8UC2: CV_MAKETYPE CV_8U 2
 
 n: make integer!
@@ -288,23 +311,24 @@ CV_64FC4: 					CV_MAKETYPE CV_64F 4
 CV_64FC_n: 					CV_MAKETYPE CV_64F (n)
 
 CV_AUTO_STEP:  				to-integer #7FFFFFFF					 
-CV_WHOLE_ARR:  				[0 to-integer #3FFFFFFF]
+CV_WHOLE_ARR:  				[cvslice 0 to-integer #3FFFFFFF]
 
-CV_MAT_CN_MASK:          	shift/left (CV_CN_MAX - 1) CV_CN_SHIFT
-CV_MAT_DEPTH_MASK:       	CV_DEPTH_MAX - 1
-CV_MAT_TYPE_MASK:        	CV_DEPTH_MAX * CV_CN_MAX - 1
+CV_MAT_CN_MASK:          	(shift/left (CV_CN_MAX - 1) CV_CN_SHIFT)
+CV_MAT_TYPE_MASK:        	(CV_DEPTH_MAX * (CV_CN_MAX - 1))
 CV_MAT_CONT_FLAG_SHIFT: 	14
-CV_MAT_CONT_FLAG:       	shift/left 1 CV_MAT_CONT_FLAG_SHIFT 
-CV_IS_MAT_CONT:				[flags and CV_MAT_CONT_FLAG]
-CV_IS_CONT_MAT:         	CV_IS_MAT_CONT
+CV_MAT_CONT_FLAG:       	(shift/left 1 CV_MAT_CONT_FLAG_SHIFT )
 CV_MAT_TEMP_FLAG_SHIFT:  	15
 CV_MAT_TEMP_FLAG:        	shift/left 1 CV_MAT_TEMP_FLAG_SHIFT 
+
+; Macros -> Func in rebol
+CV_MAT_CN: 		func [flags] [1 + shift (flags and CV_MAT_CN_MASK) CV_CN_SHIFT]  
+CV_MAT_TYPE: 	func [flags] [ flags and CV_MAT_TYPE_MASK]
+CV_IS_MAT_CONT: func [flags] [flags and CV_MAT_CONT_FLAG]
+CV_IS_TEMP_MAT: func [flags] [flags AND CV_MAT_TEMP_FLAG]
+
 CV_MAGIC_MASK:       		to-integer #FFFF0000
 CV_MAT_MAGIC_VAL:    		to-integer #42420000
 CV_TYPE_NAME_MAT:    		"opencv-matrix"
-
-
-
 
 CvMat!: make struct! [
 	type 			[integer!]		; CvMat signature (CV_MAT_MAGIC_VAL), element type and flags 
@@ -312,141 +336,117 @@ CvMat!: make struct! [
 	;for internal use only 
 	refcount 		[int]			; underlying data reference counter (a integer pointer) 
 	hdr_refcount    [integer!] 		;
-	data 			[int]	    	; in C an union [ uchar* ptr;short* s;int* i;float* fl;double* db;]
+	data 			[int]	    	; in C an union to pointer [ uchar* ptr;short* s;int* i;float* fl;double* db;]
 	rows 			[integer!]		;number of rows
 	cols 			[integer!]		;number of cols
 ] none
 
 
-; Macros -> Func in rebol
-CV_MAT_CN: func [flags [integer!]][ return (flags and CV_MAT_CN_MASK) shift 1 (CV_CN_SHIFT + 1)] 
-CV_MAT_DEPTH: func [flags [integer!]][ return flags and CV_MAT_DEPTH_MASK]
-CV_MAT_TYPE: func [flags [integer!]][ return flags and CV_MAT_TYPE_MASK] 
-CV_IS_MAT_CONT: func [flags [integer!]][ return flags and CV_MAT_CONT_FLAG]    
-CV_IS_TEMP_MAT: func [flags [integer!]][ return flags and CV_MAT_TEMP_FLAG]
-CV_IS_MAT_HDR: func [
- 	mat
- 	/local v result]
- 	[ 	v: 0 
- 		if not none? (mat) [v: v + 1 ]
- 	 	if mat/type = CV_MAT_MAGIC_VAL [v: v + 1]
- 	 	if mat/cols > 0 [v: v + 1]
- 	 	if mat/rows > 0 [v: v + 1]
- 	 	either v = 4 [result: true] [result: false]
- 	return result
+CV_IS_MAT_HDR: func [mat /local v ] [ 	
+	v: 0 
+ 	if not none? (mat) [v: v + 1]
+ 	if (mat/type) AND (CV_MAGIC_MASK)  = CV_MAT_MAGIC_VAL [v: v + 1]
+ 	if mat/cols > 0 [v: v + 1]
+ 	if mat/rows > 0 [v: v + 1]
+ 	either v = 4 [true] [false]
 ]  
 
-CV_IS_MAT: func [
- 	mat
- 	/local v result]
- 	[v: 0 
+CV_IS_MAT: func [ mat /local v ][
+	v: 0 
  	if not none? (mat/data) [v: v + 1 ]
  	if CV_IS_MAT_HDR mat [v: v + 1 ]
- 	either v = 2 [result: true] [result: false]
- 	return result
+ 	either v = 2 [true] [false]
  ] 	
-CV_IS_MASK_ARR: func [mat][return  mat/type and CV_MAT_TYPE_MASK and CV_8S 1 = 0]
+ 
+
+CV_IS_MASK_ARR: func [mat][(mat/type) AND CV_MAT_TYPE_MASK AND (complement CV_8S 1) = 0] ; true si = 0 
  	
-CV_ARE_TYPES_EQ: func [mat1 mat2 ][ return (mat1/type OR mat2/type) and CV_MAT_TYPE_MASK = 0]
+CV_ARE_TYPES_EQ: func [mat1 mat2 ][(mat1/type XOR mat2/type) AND CV_MAT_TYPE_MASK = 0] ; idem
 
-CV_ARE_CNS_EQ: func [mat1 mat2][ return (mat1/type OR mat2/type) and CV_MAT_CN_MASK = 0]
+CV_ARE_CNS_EQ: func [mat1 mat2][(mat1/type XOR mat2/type) AND CV_MAT_CN_MASK = 0] ; idem
 
-CV_ARE_DEPTHS_EQ: func [mat1 mat2][ return (mat1/type OR mat2/type) and CV_MAT_DEPTH_MASK = 0]
+CV_ARE_DEPTHS_EQ: func [mat1 mat2][(mat1/type XOR mat2/type) AND CV_MAT_DEPTH_MASK = 0]; idem
 
-CV_ARE_SIZES_EQ: func [
- 	mat1 mat2
- 	/local v result]
- 	[ v: 0 
- 	 if (mat1/rows = mat2/rows) [v: v + 1]
- 	 if (mat1/cols = mat2/cols) [v: v + 1]
- 	 either v = 2 [result: true] [result: false]
- 	return result
-]
-CV_IS_MAT_CONST: func [mat][return (mat/rows or mat/cols) = 1]
+CV_ARE_SIZES_EQ: func [mat1 mat2][(mat1/rows = mat2/rows) AND (mat1/cols = mat2/cols)]
 
-CV_ELEM_SIZE1: func [
-	type [integer!]]
-	[ return shift/left size? integer!  28  OR  shift 138682897  (CV_MAT_DEPTH type * 4 and 15)
+CV_IS_MAT_CONST: func [mat] [mat/rows XOR mat/cols = 1]
 
+CV_ELEM_SIZE1: func [type /local size_t l][ 
+	size_t: sizeof to-word type? type
+	l: shift/left size_t 28 OR 138682897
+	shift l (((CV_MAT_DEPTH type) * 4) and 15)
 ]
 
-CV_ELEM_SIZE: func [
-	type [integer!]]
-	[return  shift/left CV_MAT_CN type size? integer! / 4 * 1 * 16384 OR shift to-integer #3A50  (CV_MAT_DEPTH type * 2  and 3) 1
+CV_ELEM_SIZE: func [type /local tmp size_t l][
+	tmp: CV_MAT_CN type
+	size_t: sizeof to-word type? type
+	l: shift/left (CV_MAT_CN type) (((size_t / 4) * 1 * 16384) OR 14928)
+	shift l (((CV_MAT_DEPTH type) * 2) AND 3)
 ]
 
 {inline constructor. No data is allocated internally!!!
 (use together with cvCreateData, or use cvCreateMat instead to
-get a matrix with allocated data) !!may be  not adapted to rebol}
+get a matrix with allocated data)}
 
-cvMat: func  [rows [integer!] cols [integer!] type [integer!] data [struct! (first float-ptr!)]] [
-	m: make struct! cvMat!
-	assert (m/type and  CV_MAT_DEPTH_MASK) <= CV_64F
-	m/type: CV_MAT_MAGIC_VAL OR CV_MAT_CONT_FLAG OR type
-	m/cols = cols;
-    m/rows = rows
+{This is a slight modification of orignal version : we directly use a binary string to be stored as pointer in m/data
+To get back value use get-memory m/data size}
+
+
+cvMat: func  [rows [integer!] cols [integer!] type [integer!] data [binary!]] [
+	m: make struct! cvMat! none
+	assert [m/type and  CV_MAT_DEPTH_MASK <= CV_64F]
+	m/type: CV_MAT_MAGIC_VAL OR CV_MAT_CONT_FLAG OR type 
+	m/cols: cols;
+    m/rows: rows
     either rows > 1 [m/step: m/cols * CV_ELEM_SIZE type ][m/step: 0]
-    m/data: data;
+    m/data: string-address? data
     m/refcount: 0;
    	m/hdr_refcount: 0;
-   	return m
+   	m
 ]
 
-CV_MAT_ELEM_PTR_FAST: func [
-	mat 		
-	row 		[integer!]
-	col 		[integer!]
-	pix_size 	[integer!]]
-	[return assert row < mat/rows AND col < mat/cols = mat/data + size_t * mat/step * row + pix_size * col	
+CV_MAT_ELEM_PTR_FAST: func [mat row [integer!] col [integer!] pix_size [integer!]][
+	size: sizeof to-word type? (mat/step) 
+	assert [(row < mat/rows) AND (col < mat/cols)] 
+	mat/data + (size * row) + (pix_size * col)	
 ]
 
-CV_MAT_ELEM_PTR: func [
-	mat
-	row 		[integer!]
-	col 		[integer!]]
-	[ return CV_MAT_ELEM_PTR_FAST mat row col CV_ELEM_SIZE mat/type
+CV_MAT_ELEM_PTR: func [mat row [integer!] col [integer!]][ 
+	CV_MAT_ELEM_PTR_FAST mat row col CV_ELEM_SIZE mat/type
 ]
 
-CV_MAT_ELEM: func [
-	mat 		
-	elemtype	[integer!]
-	row 		[integer!]
-	col 		[integer!]]
-	[ return CV_MAT_ELEM_PTR_FAST mat row col size? elemtype
+CV_MAT_ELEM: func [mat elemtype [integer!] row [integer!] col [integer!]][
+ 	size: sizeof to-word type? (elemtype) 
+	return CV_MAT_ELEM_PTR_FAST mat row col size
 ]
 
-; note arr: array [2 3] : tableau 2 lignes X 3 col
-cvmGet: func [
-		mat 	
-		row 	[integer!]
-		col 	[integer!]
-		/local type ]
-		[
-		type: mat/type AND CV_MAT_TYPE_MASK
-		return assert (row < mat/rows) AND (col < mat/cols)
-		1.0 * mat/data/value + size_t * mat/step * row/col   
-		;attention if type == CV_32FC1 : float else double 
+cvmGet: func [mat row [integer!] col [integer!] /local type size_t] [
+	type: CV_MAT_TYPE mat/type
+	size_t: sizeof to-word type? mat/step * row
+	assert [(row < mat/rows) AND (col < mat/cols)]
+	offset: (mat/step * row)  + (col * size_t) + (size_t * row)
+	adr: mat/data + offset
+	if (type = CV_32FC1) OR (type = CV_64FC1)  [s: get-memory adr size_t]
+	to-decimal to-string trim s
 ]
 
-cvmSet: func [
-		row 	[integer!]
-		col 	[integer!]
-		value 	[decimal!]
-		/local type ]
-		[
-		type: CV_MAT_TYPE mat/type
-		assert (row < mat/rows) AND (col < mat/cols)
-		1.0 * mat/data/value + size_t * mat/step * row/col: value 
+cvmSet: func [mat row [integer!] col [integer!] value [decimal!] /local type size_t adr ][	
+	type: CV_MAT_TYPE mat/type
+	size_t: sizeof to-word type? mat/step * row
+	assert [(row < mat/rows) AND (col < mat/cols)]
+	offset: (mat/step * row)  + (col * size_t) + (size_t * row) ; OK for offset
+	adr: mat/data + offset
+	if (type = CV_32FC1) OR (type = CV_64FC1)  [set-memory adr to-binary value]
 ]
-cvCvToIplDepth: func [
-	type [integer!]
-	/local depth val ]
-	[depth: CV_MAT_DEPTH type
+
+
+cvCvToIplDepth: func [type [integer!] /local depth val ] [
+	depth: CV_MAT_DEPTH type
 	val: 0
 	either depth = CV_8S [val: IPL_DEPTH_SIGN] [val: 0]
 	either depth = CV_16S [val: IPL_DEPTH_SIGN] [val: 0]
 	either depth = CV_32S [val: IPL_DEPTH_SIGN] [val: 0]
-    return val 
+    val 
 ]
 
 ;/****************************************************************************************\
@@ -454,39 +454,34 @@ cvCvToIplDepth: func [
 ;\****************************************************************************************/
 CV_MATND_MAGIC_VAL:			   	to-integer #42430000
 CV_TYPE_NAME_MATND:		    	"opencv-nd-matrix"
-CV_MAX_DIM:			             32
-CV_MAX_DIM_HEAP:                 shift/left 1 16
+CV_MAX_DIM:			            32
+CV_MAX_DIM_HEAP:                shift/left 1 16
 
 
-    
-CvMatND!: make struct! [
+
+CvMatND!: make struct! compose/deep/only [
 	type 		 [integer!]
 	dims 		 [integer!]
-	refcount	 [int]
-	hdr_refcount [integer!]
-	data 		 [int]
-	dim 		 [struct! [
-					size [integer!]
-					step [integer!]]
-	]
+	refcount	 [int]         	; internal use
+	hdr_refcount [integer!]		; idem
+	data		 [int]					; pointer to an union : un variant 		 
+	dim 		 [int] ; pointer to array [0..(CV_MAX_DIM)-1] of dim structures de structures
 ] none
 
-CV_IS_MATND_HDR: func  [
-	mat	
-	/local v]
-	[ v: 0 if not none? (mat) [v: v + 1]
-	  if (mat/type AND CV_MAGIC_MASK) = CV_MATND_MAGIC_VAL [v: v + 1]
-	  either v = 2 [true] [false]
-	  return v
+
+
+CV_IS_MATND_HDR: func  [mat	/local v][ 
+	v: 0 
+	if not none? (mat) [v: v + 1]
+	if (mat/type  and CV_MAGIC_MASK) = CV_MATND_MAGIC_VAL [v: v + 1]
+	either v = 2 [true] [false]
 ]
 
-CV_IS_MATND: func [
-	mat	/local v]
-	[ 	v: 0 
-		if not none? (mat/data) [v: v + 1]
-	  	if CV_IS_MATND_HDR mat [v: v + 1]
-	  	either v = 2 [true] [false]
-	  	return v
+CV_IS_MATND: func [mat	/local v][ 	
+	v: 0 
+	if not none? (mat/data) [v: v + 1]
+	if CV_IS_MATND_HDR mat [v: v + 1]
+	either v = 2 [true] [false]
 ]
 
 ;/****************************************************************************************\
@@ -510,50 +505,41 @@ CvSparseMat!: make struct!  [
 	size 			[integer!]	
 ] none
 
-CV_IS_SPARSE_MAT_HDR: func [
-	mat	/local v]
-	[ 	v: 0 
-		if not none? (mat/data) [v: v + 1]
-		if (mat/type AND CV_MAGIC_MASK) = CV_SPARSE_MAT_MAGIC_VAL [v: v + 1]
-	  	either v = 2 [true] [false]
-	  	return v
+CV_IS_SPARSE_MAT_HDR: func [mat	/local v][ 	
+	v: 0 
+	if not none? (mat) [v: v + 1]
+	if (mat/type AND CV_MAGIC_MASK) = CV_SPARSE_MAT_MAGIC_VAL [v: v + 1]
+	either v = 2 [true] [false]
 ]
-CV_IS_SPARSE_MAT: func [
-	mat]
-	[
-    return CV_IS_SPARSE_MAT_HDR mat
-]
+CV_IS_SPARSE_MAT: func [mat][CV_IS_SPARSE_MAT_HDR mat]
 
 ;/**************** iteration through a sparse array *****************/
 
-CvSparseNode!: make struct!  [
+
+CvSparseNode!: make struct! compose/deep/only [
 	hashval		[integer!];
     next		[int] ; CvSparseNode*
 ] none 
 
 
-;CvSparseNode*: make struct! compose/deep [noeud [struct! [(CvSparseNode!)]]] none
+Conteneur: make struct! compose/deep [noeud [struct! [(CvSparseNode!)]]] none
 
 
-CvSparseMatIterator!: make struct!  [
-	mat			[int]; CvSparseMat!
-    node		[int]; CvSparseNode!
+CvSparseMatIterator!: make struct! compose/deep/only [
+	mat			[struct! (first CvSparseMat!)]
+    node		[struct! (first CvSparseNode!)]
     curidx		[integer!]
 ] none
 
-
-CV_NODE_VAL: func [
-	mat			;[CvSparseMat!]
-	node		;[CvSparseNode!]
-	]
-	[return mat/valoffset + size? (node)
+;[CvSparseMat!] ;[CvSparseNode!]
+CV_NODE_VAL: func [ mat	node] [
+	size: length? third node
+    mat/valoffset + size
 ]
 
-CV_NODE_IDX: func [
-	mat			;[CvSparseMat!]
-	node		;[CvSparseNode!]
-	]
-	[return mat/idxoffset + size? (node)
+CV_NODE_IDX: func [mat	node][
+	size: length? third node
+	mat/idxoffset + size
 ]
 
 ;/****************************************************************************************\
@@ -562,9 +548,9 @@ CV_NODE_IDX: func [
 
  CvHistType!: 				make integer! 0
  CV_HIST_MAGIC_VAL:     	to-integer #42450000
- CV_HIST_UNIFORM_FLAG:  	1 shift/left 10 1
+ CV_HIST_UNIFORM_FLAG:  	(1 shift/left 10 1)
 ;indicates whether bin ranges are set already or not 
- CV_HIST_RANGES_FLAG:   	1 shift/left 11 1
+ CV_HIST_RANGES_FLAG:   	(1 shift/left 11 1)
  CV_HIST_ARRAY:         	0
  CV_HIST_SPARSE:        	1
  CV_HIST_TREE:          	CV_HIST_SPARSE
@@ -572,23 +558,20 @@ CV_NODE_IDX: func [
 ;should be used as a parameter only, it turns to CV_HIST_UNIFORM_FLAG of hist->type 
  CV_HIST_UNIFORM: 	       1
 
-
-CvHistogram!: make struct! [
+; mat is not a pointer but a structure. Mat must be initialised 
+CvHistogram!: make struct! compose/deep/only  [
     type 			[integer!];
-    bins 			[int]; CvArr!
-    thresh			[decimal!] ; [CV_MAX_DIM][2]; /* for uniform histograms */
-    thresh2			[double] ; ** double pointeur for non-uniform histograms */
-    mat				[int] ; /* CvMatND! embedded matrix header for array histograms */
+    bins 			[int]; ** pointer to CvArr!
+    thresh			[int] ; pointer to float array [CV_MAX_DIM][2]; /* for uniform histograms */
+    thresh2			[int] ; ** pointeur to float array for non-uniform histograms */
+    mat				[struct! (first CvMatND!)] ; CvMatND! embedded matrix header for array histograms  */
 ] none
 
-CV_IS_HIST: func [
-	hist			;[CvHistogram!]
-	/local v]
-	[ 	v: 0 
-		if not none? (hist) [v: v + 1]
-		if hist/type  AND CV_MAGIC_MASK = CV_HIST_MAGIC_VAL [v: v + 1]
-		if not none? (hist/bins) [v: v + 1]
-		return either v = 3 [true] [false]
+CV_IS_HIST: func [hist /local v][ 	v: 0 
+	if not none? (hist) [v: v + 1]
+	if hist/type  AND CV_MAGIC_MASK = CV_HIST_MAGIC_VAL [v: v + 1]
+	if not none? (hist/bins) [v: v + 1]
+	either v = 3 [true] [false]
 ]
 
 CV_IS_UNIFORM_HIST: func [
@@ -597,20 +580,14 @@ CV_IS_UNIFORM_HIST: func [
 	[return (hist/type AND CV_HIST_UNIFORM_FLAG) <> 0
 ]
 
-CV_IS_SPARSE_HIST: func [
-	hist			;[CvHistogram!] 
-	/local v]
-	[ v: 0
+CV_IS_SPARSE_HIST: func [ hist	/local v][ 
+	v: 0
 	if not none? (hist/bins) [v: v + 1]
 	if (hist/type AND CV_MAGIC_MASK) = CV_SPARSE_MAT_MAGIC_VAL [v: v + 1]
-	  	return either v = 2 [true] [false]
+	either v = 2 [true] [false]
 ]
 
-CV_HIST_HAS_RANGES: func [
-	hist			;[CvHistogram!]
-	]
-	[return hist/type AND CV_HIST_RANGES_FLAG <> 0
-]
+CV_HIST_HAS_RANGES: func [hist][ hist/type AND CV_HIST_RANGES_FLAG <> 0]
 
 ;/****************************************************************************************\
 ;*                      Other supplementary data type definitions                         *
@@ -639,30 +616,30 @@ cvRect: func [x [number!] y [number!] width [number!] height [number!] /local r]
 	r/y: 		to-integer y
 	r/width: 	to-integer width
 	r/height: 	to-integer height
-	return r
+	r
 ]
 
-; CvRect! as parameter returns a IplROI! structure
-cvRectToROI: func [rect [struct! [(first CvRect!)]] coi[number!] /local roi][
+; CvRect! structure as parameter returns a IplROI! structure
+cvRectToROI: func [rect  coi [integer!] /local roi][
 	roi: make struct! IplROI! [0 0 0 0 0]
 	roi/xOffset: rect/x
     roi/yOffset: rect/y
     roi/width: rect/width
     roi/height: rect/height
     roi/coi: to-integer coi
-	return roi
+	roi
 ]
 
 
 
-; returns a CvRect! structure
-cvROIToRect: func [roi [struct! [(first IplROI!)]] /local r] [
+; returns a CvRect! structure from a IplROI! structure
+cvROIToRect: func [roi /local r] [
 	r: make struct! cvRect! [0 0 0 0]
 	r/x: 		roi/xOffset
 	r/y: 		roi/yOffset
 	r/width: 	roi/width
 	r/height: 	roi/height
-	return r
+	r
 ]
 
 
@@ -683,7 +660,7 @@ cvTermCriteria: func [type [number!] max_iter [number!] epsilon [number!] /local
 	t/type: to-integer type
 	t/max_iter: to-integer max_iter
     t/epsilon: to-decimal epsilon
-	return t
+	t
 ]
 
 
@@ -699,7 +676,7 @@ cvPoint: func [x [number!] y [number!] /local p][
 	p: make struct! cvPoint! [0 0]
 	p/x: to-integer x
 	p/y: to-integer y
-	return p
+	p
 ]
 
 CvPoint2D32f!: make struct! [
@@ -718,24 +695,24 @@ cvPoint2D32f: func [x [number!] y [number!] /local p][
 	p: make struct! CvPoint2D32f! [0 0]
 	p/x: to-decimal x
 	p/y: to-decimal y
-	return p
+	p
 ]
 
 
-; returns a CvPoint2D32f! structure
-cvPointTo32f: func [xy [struct![(first CvPoint!)]] /local p][
+; returns a CvPoint2D32f! structure from CvPoint!
+cvPointTo32f: func [xy /local p][
 		p: make struct! CvPoint2D32f! [0 0]  
 		p/x: first second xy
         p/y: second second xy 
-        return  p
+        p
 ]
 
-; returns a CvPoint! structure
-cvPointFrom32f: func [xy  [struct! [(first vPoint2D32f!)]] /local p ][
+; returns a CvPoint! structure from a cvPoint2D32f! structure
+cvPointFrom32f: func [xy  /local p ][
 		p: make struct! cvPoint! [0 0]
 		p/x: to-integer first second xy
 		p/y: to-integer second second xy 
-        return p
+        p
 ]
 
 CvPoint2D64f!: make struct! [
@@ -749,7 +726,7 @@ cvPoint2D64f: func [x [number!] y [number!] /local p][
 	p: make struct! CvPoint2D64f! [0 0] 
 	p/x: to-decimal x
 	p/y: to-decimal y
-	return p
+	p
 ]
 
 CvPoint3D64f!: make struct! [
@@ -766,7 +743,7 @@ cvPoint3D64f: func [x  [number!] y  [number!] z [number!] /local p][
 	p/x: to-decimal x
 	p/y: to-decimal y
 	p/z: to-decimal z
-	return p
+	p
 ]
 
 
@@ -783,7 +760,7 @@ cvSize: func [width [number!] height [number!] /local s] [
 	s: make struct! cvSize! [0 0]
 	s/width: to-integer width
 	s/height: to-integer height
-	return s
+	s
 ]
 
 CvSize2D32f!: make struct! [
@@ -820,42 +797,50 @@ cvBox2D!: make struct!  [
 ;/* Line iterator state */
 
 CvLineIterator!: make struct! [
-	;Bresenham algorithm state 
-    uchar 		[int] 
-    err 		[integer!]
+    uchar 		[int] 			;Pointer to the current point
+    err 		[integer!]		;Bresenham algorithm state 
     plus_delta 	[integer!]
     minus_delta [integer!]
     plus_step 	[integer!]
     minus_step 	[integer!]
-]none
+] none
 
 ;/************************************* CvSlice ******************************************/
 
-cvSlice!: make struct! [ 
+CvSlice!: make struct! [ 
 	start_index [integer!]
 	end_index [integer!]
 ] none
 
 
-cvSlice: func [start_index [number!] end_index  [number!] /local slice][
+cvSlice: func [start_index [integer!] end_index  [integer!] /local slice][
     slice: make struct! CvSlice! [0 0]
     slice/start_index: to-integer start_index
     slice/end_index: to-integer end_index
-    return slice
+    slice
 ]
 
 
-CV_WHOLE_SEQ_END_INDEX: 1073741823 ;3FFFFFFF
+CV_WHOLE_SEQ_END_INDEX: to-integer #3FFFFFFF
 CV_WHOLE_SEQ: cvSlice 0 CV_WHOLE_SEQ_END_INDEX
 ;/************************************* CvScalar *****************************************/
 ; cvColor is not included in openCV; just facilitation for rebol
 
-cvColor!: make struct! [
+CvColor!: make struct! [
 	b 		[integer!]
 	g 		[integer!]
 	r 		[integer!]
 	alpha 	[integer!]
 ] none
+
+cvColor: func [r g b  alpha /local c] [
+	c: make struct! CvColor! none
+	c/b: 	b
+	c/g: 	g
+	c/r:	r
+	c/alpha: alpha
+	c
+]
 
 
 
@@ -866,17 +851,13 @@ cvColor!: make struct! [
 ;}
 ;CvScalar;
 
+; one peut pas utiliser les blocks donc on passe par une structure
 
-cvScalar!: make struct! [
+CvScalar!: make struct! [
 	v0 [decimal!]
 	v1 [decimal!]
 	v2 [decimal!]
 	v3 [decimal!]
-] none
-
-
-_cvScalar!: make struct! compose/deep/only [
-	val [struct! (first cvScalar!)]
 ] none
 
 
@@ -928,13 +909,13 @@ cvMemBlock!: make struct! [
 
 ;cvMemBlock*: make struct! compose/deep [node_type [struct! [(cvMemBlock!)]]] none
 
-CV_STORAGE_MAGIC_VAL:   to-integer #42890000 ; 1116274688 
+CV_STORAGE_MAGIC_VAL:   to-integer #42890000 
 
 cvMemStorage!: make struct!  [
 	signature 		[integer!]		;OK when creataed
-	bottom 			[int]		; pointer cvMemBlock* first allocated block */
+	bottom 			[int]			; pointer cvMemBlock* first allocated block */
 	top 			[int]			; pointer cvMemBlock* current memory block - top of the stack */
-	parent 			[int]		; pointer to cvMemStorage!* borrows new blocks from */
+	parent 			[int]			; pointer to cvMemStorage!* We get new blocks from parent as needed. */
 	block_size 		[integer!]		; block size */
     free_space 		[integer!]		; free space in the current block */
 ] none
@@ -942,11 +923,11 @@ cvMemStorage!: make struct!  [
 ;cvMemStorage*: make struct! compose/deep [node_type [struct! [(cvMemStorage!)]]] none
 
 
-CV_IS_STORAGE: func [storage	[struct![(first cvMemStorage!)]] /local v][ 
+CV_IS_STORAGE: func [storage /local v][ 
 	v: 0
 	if not none? (storage) [v: v + 1]
 	if (storage/signature AND CV_MAGIC_MASK = CV_STORAGE_MAGIC_VAL) [v: v + 1]
-	return either v = 2 [true] [false]
+	either v = 2 [true] [false]
 ] ; OK
 
 cvMemStoragePos: make struct!  [
@@ -956,34 +937,37 @@ cvMemStoragePos: make struct!  [
 
 ;/*********************************** Sequence *******************************************/
 CvSeqBlock!: make struct!  [
-    prev [int]				;previous sequence block :  CvSeqBlock*
-    next [int]				; next sequence block :  CvSeqBlock*
-    start_index [integer!]	; index of the first element in the block + sequence->first->start_index */
-    count [integer!]	 	; number of elements in the block */
-    data [int]				; pointer to the first element of the block */
+    prev 			[int]				; previous sequence block :  CvSeqBlock*
+    next 			[int]				; next sequence block :  CvSeqBlock*
+    start_index 	[integer!]			; index of the first element in the block + sequence->first->start_index */
+    count 			[integer!]	 		; number of elements in the block */
+    data 			[int]				; pointer to the first element of the block */
 ] none
 
-
+;we combine CV_TREE_NODE_FIELDS  CV_SEQUENCE_FIELDS
 
 
 CvSeq!: make struct!  [
 	flags           		[integer!]      ;micsellaneous flags
 	header_size     		[integer!]      ;size of sequence header
-    h_prev                 [int]    		;struct previous sequence  CvSeq! 
-    h_next                 [int]    		;struct next sequence CvSeq!
-    v_prev                 [int]    		;struct 2nd previous sequence CvSeq!
-    v_next                 [int]     		;struct 2nd next sequence CvSeq!
+    h_prev                 	[int]    		;struct previous sequence  CvSeq! 
+    h_next                	[int]    		;struct next sequence CvSeq!
+    v_prev                 	[int]    		;struct 2nd previous sequence CvSeq!
+    v_next                 	[int]     		;struct 2nd next sequence CvSeq!
     total                   [integer!]      ;total number of elements
     elem_size               [integer!]      ;size of sequence element in bytes 
-    block_max              [int]    		; maximal bound of the last block
-    ptr                    [int]    		;current write pointer
+    block_max              	[int]    		; maximal bound of the last block
+    ptr                    	[int]    		;current write pointer
     delta_elems             [integer!]      ;how many elements allocated when the seq grows
     storage                 [int]   		;CvMemStorage! where the seq is stored
     free_blocks             [int]     		;CvSeqBlock! free blocks list 
     first                   [int]     		;CvSeqBlock! pointer to the first sequence block 
 ] none
 
-CvSeq**: make struct! [seq [struct![(first CvSeq!)]]] none; it's a double pointer
+
+
+CvSeq**: make struct! compose/deep/only [seq [struct!(first CvSeq!)]] none
+
 
 CV_TYPE_NAME_SEQ:             "opencv-sequence"
 CV_TYPE_NAME_SEQ_TREE:        "opencv-sequence-tree"
@@ -997,24 +981,32 @@ CV_TYPE_NAME_SEQ_TREE:        "opencv-sequence-tree"
 }
 
 
-CV_SET_ELEM_FIELDS!: make struct! [
-    flags [integer!]				;                         \
+
+CvSetElem!: make struct! [
+	flags [integer!]				;                        
     next_free [int];
 ] none
 
-CvSetElem!: make struct! [
-	CvSetElem [int] ; pointeur CV_SET_ELEM_FIELDS!
-]none
 
-
-CV_SET_FIELDS!: make struct!   [
-	r 				[int]		;CvSeq!
-	free_elems		[int]		;CvSetElem!  
-    active_count 	[integer!]
-] none
-
+;we combine CV_SET_FIELDS! and CV_SEQUENCE_FIELDS()   in a  struct
 CvSet!: make struct!  [
-	 ptr [int] ; pointeur CV_SET_FIELDS!
+	flags           		[integer!]      ;micsellaneous flags
+	header_size     		[integer!]      ;size of sequence header
+    h_prev                 	[int]    		;struct previous sequence  CvSeq! 
+    h_next                	[int]    		;struct next sequence CvSeq!
+    v_prev                 	[int]    		;struct 2nd previous sequence CvSeq!
+    v_next                 	[int]     		;struct 2nd next sequence CvSeq!
+    total                   [integer!]      ;total number of elements
+    elem_size               [integer!]      ;size of sequence element in bytes 
+    block_max              	[int]    		; maximal bound of the last block
+    ptr                    	[int]    		;current write pointer
+    delta_elems             [integer!]      ;how many elements allocated when the seq grows
+    storage                 [int]   		;CvMemStorage! where the seq is stored
+    free_blocks             [int]     		;CvSeqBlock! free blocks list 
+    first                   [int]     		;CvSeqBlock! pointer to the first sequence block
+	free_elems				[int]			;CvSetElem!  
+    active_count 			[integer!]	 
+	 
 ]none
 
 
@@ -1055,27 +1047,29 @@ CV_GRAPH_VERTEX_FIELDS!: make struct!  [
 ]none
 
 
-CvGraphEdge!: make struct! 
-[
-    ptr [int] ;CV_GRAPH_EDGE_FIELDS!
+CvGraphEdge!: make struct! [
+    flags			[integer!];        
+    weight			[integer!];    
+    next			[int] ; pointer struct CvGraphEdge*  
+    vtx				[int] ; pointer struct CvGraphVtx* 
 ] none
 
-CvGraphVtx!: make struct!  
-[
-	ptr [int] ; CV_GRAPH_VERTEX_FIELDS!
+CvGraphVtx!: make struct! [
+	flags				[integer!];                
+    first 				[int] ; pointer struct CvGraphEdge! ;
 ] none
 
-CvGraphVtx2D!: make struct! 
-[
-    ptrg 	[int] ;CV_GRAPH_VERTEX_FIELDS!
-    ptr 	[int] ; CvPoint2D32f!
+CvGraphVtx2D!: make struct! compose/deep/only [
+    flags				[integer!];                
+    first 				[int] ; pointer struct CvGraphEdge* ;
+    ptr 				[struct! (first CvPoint2D32f!)] ; CvPoint2D32f!
 ] none
 
 ;Graph is "derived" from the set (this is set a of vertices) and includes another set (edges)
 
-CV_GRAPH_FIELDS!: make struct!  [
-    r 		[int] ;CV_SET_FIELDS!
-    edges 	[int]; pointer CvSet! 
+CV_GRAPH_FIELDS!: make struct! compose/deep/only  [
+    r 		[struct! (first CvSeq!)] ;CV_SET_FIELDS!
+    edges 	[struct! (first CvSet!)]; pointer CvSet! 
 ] none
 
 

@@ -7,6 +7,7 @@ set 'appDir what-dir
 
 isImage: false
 iscolor: CV_LOAD_IMAGE_UNCHANGED
+isTest: false ; use true for testing copy function
 
 ; we use objects 
 cvImage: make object![
@@ -15,8 +16,7 @@ cvImage: make object![
 	y: make integer! 0
 	windowsName: make string! ""
 	img: none
-	&img: none
-	&&img: none 
+	
 	;methodes
     init: make function! [v1 v2 v3] [
     	x: 		v1
@@ -25,9 +25,20 @@ cvImage: make object![
     ]
     cvload: func [color] [
     	img: cvLoadImage windowsName color 
-    	&img: struct-address? img
-		&&img: make struct! int-ptr! reduce [&img]  ; this seems better
-
+    	; we use a copie to test cvGetRawData
+    	
+    	if isTest [
+			copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
+			cvZero copie
+			step: make struct! int-ptr! reduce [img/widthStep]
+	    	&step: struct-address? step
+	    	data: make struct! int-ptr! reduce [img/imageSize]
+	    	&data: struct-address? data 
+	    	roi: make struct! cvSize! reduce [0 0]
+			cvGetRawData img &data &step roi
+			&data: data/int          					; get the pointer adress in return
+	    	data: get-memory  &data img/imageSize		;get the data
+			set-memory copie/imageData data]	
 	]
     
     cvShow: does [
@@ -35,6 +46,10 @@ cvImage: make object![
     	cvResizeWindow windowsName 512 512
     	cvMoveWindow windowsName x y
     	cvShowImage windowsName img
+    	if isTest [
+    		cvNamedWindow "copie" CV_WINDOW_AUTOSIZE
+    		cvShowImage "copie" copie
+    	]
     ]
     
     
@@ -61,8 +76,8 @@ cvImage: make object![
         	coi: 0
         	xOffset: 0
         	yOffset: 0
-        	width: 0
-        	height: 0
+        	width: img/width 
+        	height: img/height 
         
         ]
         ;  Image/tileInfo changed? 
@@ -113,6 +128,7 @@ cvImage: make object![
     cvtoRebol: func [dest] [
        t1: now/time/precise
         data: get-memory img/imageData img/imageSize  
+       
         cimg: make image! as-pair  (img/width) (img/height) 
         ; cv grayscale image must be converted to rgb rebol image
         if img/nChannels = 1 [
@@ -137,15 +153,17 @@ loadImage: does [
     cvDestroyAllWindows
 	temp: request-file 
 	if not none? temp [
+		fl: flash "Converting cvImage to Rebol image"
+		wait 0.1
 		ima: make cvImage []
 		ima/init 300 300 to-string to-local-file to-string temp
 		ima/cvLoad iscolor
-		;ima/cvShow
+		ima/cvShow
 		ima/cvInfo console
 		rimage/image: load ""
 		show rimage
-		fl: flash "Converting cvImage to Rebol image"
-		wait 0.1
+		
+		
 		ima/cvtoRebol rimage
 		unview/only fl
 		]

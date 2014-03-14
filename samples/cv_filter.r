@@ -10,7 +10,14 @@ REBOL [
 do %../opencv.r
 set 'appDir what-dir 
 
-fileName: to-string to-local-file join appDir "images/lena.jpg"
+;picture: to-string to-local-file join appDir "images/lena.jpg"
+
+print "Select a picture"
+
+temp: request-file 
+picture: to-string to-local-file to-string temp
+
+
 srcWnd: "Using cvTrackbar: ESC to close"
 dstWnd: "Filtering"
 tBar: "Filtre"
@@ -38,7 +45,7 @@ trackEvent: func [pos] [
 loadImage: does [
 	cvNamedWindow srcWnd CV_WINDOW_AUTOSIZE
 	cvNamedWindow dstWnd CV_WINDOW_AUTOSIZE
-	src: cvLoadImage fileName CV_LOAD_IMAGE_UNCHANGED 
+	src: cvLoadImage picture CV_LOAD_IMAGE_UNCHANGED 
 	dst: cvCloneImage src
 	
 	cvMoveWindow srcWnd 25 100
@@ -48,13 +55,15 @@ loadImage: does [
 	cvCreateTrackbar tBar srcWnd &pos 255 :trackEvent &pos
 	cvShowImage srcWnd src
 	cvShowImage dstWnd dst	
+	cvwaitKey 0
 ]
 
 loadImage
+
 cvwaitKey 0
 free-mem &pos
-_cvReleaseImage src
-_cvReleaseImage dst
+cvReleaseImage src
+cvReleaseImage dst
 cvDestroyWindow srcWnd
 cvDestroyWindow dstWnd
 

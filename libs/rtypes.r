@@ -18,6 +18,7 @@ REBOL [
 ;****************** we need some specific structures for talking to OPenCV  **************
 ; * pointers
 
+void*: integer!
 char*: make struct! [buffer [string!]] none
 struct*: make struct! [struct [struct! [[save] c [char]]]] none
 

@@ -7,8 +7,12 @@ REBOL [
 ]
 do %../opencv.r
 set 'appDir what-dir 
-lena:  to-string to-local-file join appDir "images/lena.tiff"
+;picture:  to-string to-local-file join appDir "images/lena.tiff"
 
+print "Select a picture"
+
+temp: request-file 
+picture: to-string to-local-file to-string temp
 
 ; function pointer that can be called by TrackBar callback 
 trackEvent: func [ pos [integer!] ][print ["Trackbar position is : " pos]] 
@@ -27,9 +31,9 @@ mouseEvent: func [
 cvStartWindowThread  ; own's window thread 
 &p: int-ptr! none  ; for trackbar position 
 
-
-windowsName: "Lena: What a Wonderful World!"
-print ["Loading a tiff image"]
+windowsName: "What a Wonderful World!"
+print "Loading a tiff image"
+print newline
 
 lenaWin: cvNamedWindow windowsName CV_WINDOW_AUTOSIZE ; create window 
 ; for trackbar events 
@@ -41,27 +45,53 @@ cvSetMouseCallBack windowsName :mouseEvent none
 
 ;load image 
 
-img: cvLoadImage lena CV_LOAD_IMAGE_COLOR
-&img: struct-address? img
-
-copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
-;cvZero copie
-	
-&step: make struct! int-ptr! reduce [0]
-&size: make struct! cvSize! reduce [0 0]
-		
-data: make binary! img/imageSize * sizeof 'integer!
-&data: string-address? data
-&&data: make struct! int-ptr! reduce [&data]
-cvGetRawData img &&data &step &size
-
-data: to-binary address-to-string &&data/int
-set-memory copie/imageData data
-free-mem data
+img: cvLoadImage picture CV_LOAD_IMAGE_COLOR
 
 cvShowImage windowsName img ; show image
+copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
+cvZero copie
+; to get data from orginal image wit rawdata	
+step: make struct! int-ptr! reduce [img/widthStep]
+&step: struct-address? step
+data: make struct! int-ptr! reduce [img/imageSize]
+&data: struct-address? data 
+roi: make struct! cvSize! reduce [img/width img/height]
+
+cvGetRawData img &data &step roi
+&data: data/int          					; get the pointer adress in return
+data: get-memory  &data img/imageSize		;get the data
+cvSetData copie &data img/widthStep			;now use SetData to make a copy of image !
+;set-memory copie/imageData data			; this can also be done but slower (rebol)
+free-mem data								; free memory
+
+
 cvNamedWindow "copie" CV_WINDOW_AUTOSIZE
 cvShowImage "copie" copie
+
+print "Use cvGetRawData to make a new image"
+
+
+; test cvCopy OK
+copie2: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
+cvCopy img copie2 none
+
+cvNamedWindow "copie2" CV_WINDOW_AUTOSIZE
+cvShowImage "copie2" copie2
+
+print "Use cvCopy to make a new image"
+
+cvWaitKey 1000
+; tout en white: OK
+print "Copy image is white"
+
+cvSet copie2 255 255 255 255 0
+
+cvShowImage "copie2" copie2
+cvWaitKey 1000
+; tout en noir OK
+cvSetZero copie2
+cvShowImage "copie2" copie2
+print "Copy image is black"
 
 cvWaitKey 500 ;wait 500 ms
 cvResizeWindow windowsName 256 256 ; resize window
@@ -75,13 +105,14 @@ cvMoveWindow windowsName 300 50  ;move window
 
 cvWaitKey 0
 print ["Saving the image in jpg"]
-cvSaveImage to-string to-local-file join appDir "images/lena.jpg" img ; save tiff as jpg
+cvSaveImage to-string to-local-file join appDir "images/image.jpg" img ; save tiff as jpg
 print ["done! Bye "]
 
 cvDestroyWindow windowsName       
 free-mem &p	;release trackbar pointer
-_cvReleaseImage img ; release image pointer
-
+cvReleaseImage img ; release image pointer
+cvReleaseImage copie
+cvReleaseImage copie2
 
 
 
