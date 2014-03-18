@@ -12,7 +12,7 @@ wName: "Test Window [q to Quit]"
 cvStartWindowThread 									; separate window thread
 capture: cvCreateCameraCapture CV_CAP_ANY 				; create a capture using default webcam (iSight) ; change to n for other cam
 if capture = none [print "error!"]
-
+&capture: as-pointer! capture
 ;set our movie properties
 fps: 24.00
 camW: 1280
@@ -35,9 +35,10 @@ foo: 0
 
 ; repeat until q keypress
 while [foo <> 113] [
-	    image:  cvQueryFrame capture					;get frame
+	    image:  cvQueryFrame &capture					;get frame
+	    &image: as-pointer! image
 		cvResizeWindow wName 640 480			; resize
-        cvShowImage wName  image   				; show frame
+        cvShowImage wName  &image   				; show frame
         if rec [cvWriteFrame writer image]  			; write frame on disk if we want to record movie 
         foo: cvWaitKey 1
 ]
@@ -47,6 +48,9 @@ cvWaitKey 0
 cvDestroyAllWindows
 cvReleaseImage image 
 cvReleaseCapture capture
+cvReleaseImage &image 
+cvReleaseCapture &capture
+
 if rec [cvReleaseVideoWriter writer]
 
 

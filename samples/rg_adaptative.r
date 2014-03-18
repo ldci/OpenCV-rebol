@@ -33,15 +33,18 @@ loadImage: does [
 	if not none? temp [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
-		    ;Read in gray image
-			Igray: cvLoadImage filename CV_LOAD_IMAGE_GRAYSCALE
-			clone: cvLoadImage filename CV_LOAD_IMAGE_COLOR ; pour avoir 3 channels
-			
-			cvtoRebol clone rimage1
-			
+			;read src image
+			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR;  force 3 channels reading 
+			&src: as-pointer! src 
 			;Create the grayscale output images
-			Iat: cvCreateImage Igray/width Igray/height IPL_DEPTH_8U 1
+			&igray: as-pointer! cvCreateImage src/width src/height IPL_DEPTH_8U 1
+			cvCvtColor &src &igray CV_BGR2GRAY
+			&iat: as-pointer! cvCreateImage src/width src/height IPL_DEPTH_8U 1
+			;make a rebol image
+			cvtoRebol  src rimage1
 			isFile: true
+			;cvNamedWindow "src" CV_WINDOW_AUTOSIZE 
+			;cvShowImage "src" src 
 		]
 		[Alert "Not an image" ]
 	]
@@ -50,16 +53,17 @@ loadImage: does [
 
 
 showImages: does [
- 	cvAdaptiveThreshold Igray Iat 255 adaptive_method adaptive_threshold_type block_size offset
- 	cvConvertImage iat clone 0
-	cvtoRebol clone rimage2
-	recycle
+ 	cvAdaptiveThreshold &Igray &Iat 255 adaptive_method adaptive_threshold_type block_size _offset
+ 	cvConvertImage &iat &src none
+	cvtoRebol src rimage2
 ]
 
 release: does [
-	cvReleaseImage Igray
-	cvReleaseImage Iat
-	cvReleaseImage clone
+	cvReleaseImage src
+	cvReleaseImage &src
+	cvReleaseImage &Igray
+	cvReleaseImage &Iat
+	cvReleaseImage &src
 ]
 
 
@@ -81,12 +85,13 @@ makeAdaptative: does [
 			if block_size <= 1 [block_size: 3]
 		] [block_size: 3]
 		
-		if error? try [offset: to-integer aParam/text] [offset: 5]
+		if error? try [_offset: to-integer aParam/text] [_offset: 5]
 		
 	showImages
 	]
 
 ]
+ 
 
 mainWin: [
 	at 1x1 

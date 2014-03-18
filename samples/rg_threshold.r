@@ -17,43 +17,41 @@ isFile: false
 tType: [CV_THRESH_BINARY CV_THRESH_BINARY_INV CV_THRESH_TRUNC CV_THRESH_TOZERO CV_THRESH_TOZERO_INV]
 
 sumRGB: func [src dst] [
-	
-	clone: cvCloneImage src ; for rebol 
+	&src: as-pointer! src
+	&dst: as-pointer! dst
 	;Allocate individual image planes: great!
-	r: cvCreateImage src/width src/height IPL_DEPTH_8U 1 
-	g: cvCreateImage src/width src/height IPL_DEPTH_8U 1 
-	b: cvCreateImage src/width src/height IPL_DEPTH_8U 1 
+	&r: as-pointer! cvCreateImage src/width src/height IPL_DEPTH_8U 1 
+	&g: as-pointer! cvCreateImage src/width src/height IPL_DEPTH_8U 1 
+	&b: as-pointer! cvCreateImage src/width src/height IPL_DEPTH_8U 1 
 	
 	; Split image onto the color planes. 
-	cvSplit src r g b none ; 
+	cvSplit &src &r &g &b none ; 
+	
 	
 	; for split test 
 	{cvNamedWindow "r" 1
 	cvNamedWindow "g" 1
 	cvNamedWindow "b" 1
-	cvShowImage "r" r
-	cvShowImage "g" g
-	cvShowImage "b" b}
+	cvShowImage "r" &r
+	cvShowImage "g" &g
+	cvShowImage "b" &b}
 	
 	;Temporary storage.
-	s: cvCreateImage src/width src/height IPL_DEPTH_8U 1 
-	
+	&s: as-pointer! cvCreateImage src/width src/height IPL_DEPTH_8U 1 
 	
 	;Add equally weighted rgb values.
-	cvAddWeighted r 1 / 3.0  g 1 / 3.0 0.0 s
-	cvAddWeighted s 2 / 3.0 b 2 / 3.0 0.0 s
+	cvAddWeighted &r 1 / 3.0  &g 1 / 3.0 0.0 &s
+	cvAddWeighted &s 2 / 3.0 &b 2 / 3.0 0.0 &s
     ;Truncate values above threshold value
-	cvThreshold s dst Thresh Thresh threshold_type
+	cvThreshold &s &dst Thresh Thresh threshold_type
 	; for rebol who have difficulties with image channel = 1 
-	cvConvertImage dst clone 0
+	cvConvertImage &dst &clone 0
 	cvtoRebol clone rimage2
-	cvReleaseImage r
-	cvReleaseImage g
-	cvReleaseImage b
-	cvReleaseImage s
-	cvReleaseImage clone
-	mem/text: join "Used memory:  " [round/to stats / (10 ** 6) 0.01 " Mb"] 
-	show mem
+	
+	cvReleaseImage &r
+	cvReleaseImage &g
+	cvReleaseImage &b
+	cvReleaseImage &s
 ]
 
 
@@ -67,8 +65,13 @@ loadImage: does [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
 			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR
+			&src: as-pointer! src 
+			;print [src/depth " " src/nchannels]
+			clone: cvCloneImage &src
+			&clone: as-pointer! clone
 			dst: cvCreateImage src/width src/height src/depth 1
-			cvtoRebol src rimage1 
+			&dst: as-pointer! dst
+			cvtoRebol src rimage1
 			cvtoRebol src rimage2
 			isFile: true
 			sl1/data: 0.5

@@ -44,16 +44,17 @@ convertImage: does [
     ; on fait des images 8 bits 
     bin: to-binary imageRead 
     image: cvCreateImage width height IPL_DEPTH_8U nChannels
+    &image: as-pointer! image
 	; get pointer address 
 	&bin: string-address? bin
-	cvSetData image &bin image/widthStep ;size/width
+	cvSetData &image &bin image/widthStep ;size/width
 	
 	; rebol version: slower
 	;set-memory image/imageData bin ; copy data 
 	
 	;if rgb/data  [if nChannels = 3 [cvConvertImage image image CV_CVTIMG_SWAP_RB] ] ;; pour le flip RGB to BGR
 	cvNamedWindow wndname CV_WINDOW_AUTOSIZE
-	cvShowImage wndname image
+	cvShowImage wndname &image
 	t2: now/time/precise
 	unview/only fl
 	sb/text: join "Done in " [round/to t2 - t1 0.001 " sec"]

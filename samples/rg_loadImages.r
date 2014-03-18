@@ -14,17 +14,18 @@ do to-file join guiDir "rebgui.r"
 
 isImage: false
 iscolor: CV_LOAD_IMAGE_UNCHANGED
+isTest: false ; use true for testing copy function
 
 bloc: copy []
 
 
-; we use objects 
 cvImage: make object![
 	;variables
 	x: make integer! 0
 	y: make integer! 0
 	windowsName: make string! ""
 	img: none
+	
 	;methodes
     init: make function! [v1 v2 v3] [
     	x: 		v1
@@ -33,34 +34,37 @@ cvImage: make object![
     ]
     cvload: func [color] [
     	img: cvLoadImage windowsName color 
-
+    	&img: as-pointer! img
+    	; we use a copie to test cvGetRawData
+    	
+    	if isTest [
+			copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
+			&copie: as-pointer! 
+			cvZero &copie
+	    	&step as-int! img/widthStep
+	    	&data: as-int! img/imageSize
+	    	roi: make struct! cvSize! reduce [0 0]
+			cvGetRawData &img &data &step roi
+	    	data: get-memory  &data img/imageSize		;get the data
+			set-memory copie/imageData data]	
 	]
     
     cvShow: does [
     	cvNamedWindow windowsName CV_WINDOW_AUTOSIZE
     	cvResizeWindow windowsName 512 512
     	cvMoveWindow windowsName x y
-    	cvShowImage windowsName img
+    	cvShowImage windowsName &img
+    	if isTest [
+    		cvNamedWindow "copie" CV_WINDOW_AUTOSIZE
+    		cvShowImage "copie" &copie
+    	]
     ]
     
-    getValues: func [src] [
-    blocValues: []
-	str: copy third src ; values changed by routines are here
-	i: 0
-	while [not tail? str] [
-	i: i + 1
-	p: to-integer reverse copy/part str 4
-	;print [ i " : " p]
-	append blocValues p
-	str: skip str 4
-	]
-	blocValues
-]
-
+    
     
     cvInfo: func [console] [
         str: copy third img ; values changed by routines are here
-        str: skip str 48 ; looking for a modification of roi address
+        str: skip str 48 ; looking for an eventual modification of roi address
         ptr: to-integer reverse copy/part str 4
         ;Roi exists
         if ptr <> 0 [roiValues: get-memory to-integer p 20
@@ -80,11 +84,11 @@ cvImage: make object![
         	coi: 0
         	xOffset: 0
         	yOffset: 0
-        	width: 0
-        	height: 0
+        	width: img/width 
+        	height: img/height 
         
         ]
-         ;  Image/tileInfo changed? 
+        ;  Image/tileInfo changed? 
         str: skip str 8
         ptr: to-integer reverse copy/part str 4
         tileInfo: ptr 
@@ -96,6 +100,7 @@ cvImage: make object![
       		width: 0
       		height: 0
       	]
+      	
         
     	console/text: ""
 		console/text:  rejoin [ "image size: " img/nSize newline]
@@ -131,6 +136,7 @@ cvImage: make object![
     cvtoRebol: func [dest] [
        t1: now/time/precise
         data: get-memory img/imageData img/imageSize  
+       
         cimg: make image! as-pair  (img/width) (img/height) 
         ; cv grayscale image must be converted to rgb rebol image
         if img/nChannels = 1 [
@@ -144,29 +150,31 @@ cvImage: make object![
         dest/effect: [fit flip 1x1] ; rgb data order
 		show dest
 		t2: now/time/precise
-		set-text sb join "Conversion done in " [round/to t2 - t1 0.001 " sec" " [ "  getIPLValues ima/img " ]"]
-		show sb
-		recycle
+		sb/text: join "Conversion done in " [round/to t2 - t1 0.001 " sec"]
+	show sb
     ]  
 ]
+
+
 
 loadImage: does [
     cvDestroyAllWindows
 	temp: request-file 
 	if not none? temp [
+		fl: flash "Converting cvImage to Rebol image"
+		wait 0.1
 		ima: make cvImage []
 		ima/init 300 300 to-string to-local-file to-string temp
 		ima/cvLoad iscolor
-		;ima/cvShow
+		ima/cvShow
 		ima/cvInfo console
 		rimage/image: load ""
 		show rimage
-		set-text sb "Patience! Converting cvImage to Rebol image"
-		;fl: splash compose [ size: 160x50 field: "Converting cvImage to Rebol image" font: ctx-rebgui/widgets/default-font ]
-		wait 0.1
+		
+		
 		ima/cvtoRebol rimage
-		;unview fl
-	]
+		unview/only fl
+		]
 ]
 
 
@@ -177,7 +185,6 @@ setColor: does [
 		"Grayscale" [iscolor: CV_LOAD_IMAGE_GRAYSCALE]
 	]
 ]
-
 
 	
 mainWin: [

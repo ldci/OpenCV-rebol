@@ -17,20 +17,22 @@ nbhsize: reverse [1 3 5 7]
 neighbourhoodSize: 7 ; for laplace odd and max = 7 
 
 capture: cvCreateCameraCapture CV_CAP_ANY 							; create a capture using default webcam
-
-image: make struct! IplImage! second cvQueryFrame capture 			; get the first image 
+&capture: as-pointer! capture 
+image: cvQueryFrame &capture 			; get the first image 
+&image: as-pointer! image
 ;for cvLaplace only IPL_DEPTH_32F IPL_DEPTH_16S as destination image
 
-laplace: cvCreateImage image/width image/height IPL_DEPTH_32F image/nChannels
+&laplace: as-pointer! cvCreateImage image/width image/height IPL_DEPTH_32F image/nChannels
 
 
 
 
 showCamera: does [
-	frame: cvQueryFrame capture  
+	frame: cvQueryFrame &capture  
+	&frame: as-pointer! frame
 	cvtoRebol frame rimage1					; transform to REBOL
-	cvLaplace frame laplace neighbourhoodSize ; 32 bit image
-	cvConvertImage laplace  frame none   		  ; 32 -> 24 bit image
+	cvLaplace &frame &laplace neighbourhoodSize ; 32 bit image
+	cvConvertImage &laplace  &frame none   		  ; 32 -> 24 bit image
 	cvtoRebol  frame rimage2					; transform to REBOL
 	frame: none
 	mem/text: stats / (10 ** 6) 
@@ -48,7 +50,7 @@ mainWin: [
 	edit-list "7" data nbhsize [neighbourhoodSize: to-integer face/text]
 	mem: field 20 options [info] 
 	
-	button 18 "Quit"  #"q"[ cvReleaseImage laplace cvReleaseCapture capture quit]
+	button 18 "Quit"  #"q"[ cvReleaseImage &laplace cvReleaseCapture capture quit]
 	return
 	panel data [
 		rimage1: image black 80x60 

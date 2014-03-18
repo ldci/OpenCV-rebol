@@ -51,7 +51,7 @@ camera: make object![
     
     ;initialize video driver
 	activateCamera: does [
-		capture: cvCreateCameraCapture index
+		&capture: as-pointer! cvCreateCameraCapture index
 		cvNamedWindow windowsName CV_WINDOW_AUTOSIZE
 		cvResizeWindow windowsName height width
 		cvMoveWindow windowsName x y
@@ -61,16 +61,17 @@ camera: make object![
 	]
 	;grab and show frame in reference to object fps [frame/sec]
 	showVideo: does [
-		image: cvQueryFrame  capture ; grab and retrieve image
-		if isDate [cvPutText image to-string now/time/precise pt1/x pt1/y &font 0.0 0.0 255.0 0.0]
+		image: cvQueryFrame  &capture ; grab and retrieve image
+		&image: as-pointer! image
+		if isDate [cvPutText &image to-string now/time/precise pt1/x pt1/y &font 0.0 0.0 255.0 0.0]
 		cvResizeWindow windowsName height width
-		cvShowImage windowsName image
+		cvShowImage windowsName &image
 		isnotVideo: false
 	]
 	; hide video
 	hideVideo: does [
-		cvZero image
-		cvShowImage windowsName image
+		cvZero &image
+		cvShowImage windowsName &image
 		isnotVideo: true
 	]
 	; release all created pointer 
@@ -78,7 +79,7 @@ camera: make object![
 		isActive: false
 		cvDestroyWindow handle ; windowsName does not close the window
 		windowsName: make string! ""
-		cvReleaseCapture capture
+		cvReleaseCapture &capture
 	]
 ] ; end of object
 

@@ -25,8 +25,8 @@ openClose: does [
     either n > 0 [an: n] [an: negate n]
     element: cvCreateStructuringElementEx (an * 2) + 1 (an * 2) + 1 an an element_shape 0 
 	&&element: make struct! int-ptr! reduce [struct-address? element]  ; a double pointer
-	either n < 0 [cvErode src dst element 1 cvDilate dst dst element 1] 
-	             [cvDilate src dst element 1 cvErode dst dst element 1]
+	either n < 0 [cvErode &src &dst element 1 cvDilate &dst &dst element 1] 
+	             [cvDilate &src &dst element 1 cvErode &dst &dst element 1]
 	cvReleaseStructuringElement &&element
 	cvtoRebol dst rimage1
 	oct/text: n
@@ -40,8 +40,8 @@ erodeDilate: does [
      either n > 0 [an: n] [an: negate n]
      element: cvCreateStructuringElementEx (an * 2) + 1 (an * 2) + 1 an an element_shape 0 
 	 &&element: make struct! int-ptr! reduce [struct-address? element]  ; a double pointer
-	 either n < 0 [cvErode src dst element 1] 
-	             [cvDilate src dst element 1]
+	 either n < 0 [cvErode &src &dst element 1] 
+	             [cvDilate &src &dst element 1]
 	 cvReleaseStructuringElement &&element
 	 cvtoRebol dst rimage2 
 	 edt/text: n
@@ -71,7 +71,9 @@ loadImage: does [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
 			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR; CV_LOAD_IMAGE_UNCHANGED 
-			dst: cvCloneImage src
+			&src: as-pointer! src
+			dst: cvCloneImage &src
+			&dst: as-pointer! dst
 			cvtoRebol src rimage1
 			cvtoRebol src rimage2
 			isFile: true
@@ -90,7 +92,7 @@ mainwin: layout/size [
 	at 5x5 
 	btn 100 "Load Image" [loadImage]
 	txt 50 "Shape" 
-	flag: choice 150 data [ "Rectangle" "Elipse" "Cross"] [setShape]
+	flag: choice black 150 data [ "Rectangle" "Elipse" "Cross"] [setShape]
 	at 935x5 btn 100 "Quit" [if isFile [cvReleaseImage src cvReleaseImage dst] quit]
 	space 0x0
     at 5x30 rimage1: image 512x512 frame blue

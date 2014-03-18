@@ -14,20 +14,22 @@ cvStartWindowThread ; separate window thread
 nbhsize: [7 5 3 1]
 neighbourhoodSize: 7 ; for laplace odd and max = 7 
 
-capture: cvCreateCameraCapture CV_CAP_ANY 							; create a capture using default webcam
-image: make struct! IplImage! second cvQueryFrame capture 			; get the first image 
+; create a capture using default webcam							
+&capture: as-pointer! cvCreateCameraCapture CV_CAP_ANY  
+; get the first image 
+image: cvQueryFrame &capture 			
 ;for cvLaplace only IPL_DEPTH_32F IPL_DEPTH_16S as destination image
-laplace: cvCreateImage image/width image/height IPL_DEPTH_32F image/nChannels
-
+&laplace: as-pointer! cvCreateImage image/width image/height IPL_DEPTH_32F image/nChannels
 
 showCamera: has [frame] [
 	isShow: true
 	while [isShow] [
-		frame: cvQueryFrame capture  
-		rimage1/image: cam2Rebol frame
-		cvLaplace frame laplace neighbourhoodSize ; 32 bit image
-		cvConvertImage laplace frame 0    		  ; 32 -> 24 bit image
-		rimage2/image: cam2Rebol frame
+		frame: cvQueryFrame &capture  
+		cvtoRebol frame rimage1					; transform to REBOL
+		&frame: as-pointer! frame
+		cvLaplace &frame &laplace neighbourhoodSize ; 32 bit image
+		cvConvertImage &laplace &frame 0    		  ; 32 -> 24 bit image
+		cvtoRebol frame rimage2
 		mem/text: round/to stats / (10 ** 6) 0.01
 		show [rimage1 rimage2 mem] 
 		wait 0.025
@@ -52,10 +54,10 @@ mainwin: layout/size [
 	at 20x5
 	btn 100 "Start" #"s" [cam/colors/2: red show cam  showCamera ]
 	btn 100 "Pause" #"p" [cam/colors/2: green show cam hideCamera ]
-	choice silver 30 data nbhsize [neighbourhoodSize: to-integer face/text]
+	choice black 30 data nbhsize [neighbourhoodSize: to-integer face/text]
 	mem: info 100 
 	pad 170
-	btn 100 "Quit"  #"q" [cvReleaseImage laplace cvReleaseCapture capture quit]
+	btn 100 "Quit"  #"q" [cvReleaseImage &laplace cvReleaseCapture &capture quit]
 	space 0x0
     at 5x30 rimage1: image 320x240 black effect [fit flip 1x1] frame white
     pad 2

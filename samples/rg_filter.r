@@ -27,13 +27,18 @@ loadImage: does [
 	if not none? temp [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
-			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR; CV_LOAD_IMAGE_UNCHANGED 
-			dst: cvCloneImage src
-			cvtoRebol src rimage1
-			cvtoRebol src rimage2 
+			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR ;CV_LOAD_IMAGE_UNCHANGED 
+			&src: as-pointer! src
+			dst: cvCloneImage &src
+			
+			&dst: as-pointer! dst
+			
+			
+			cvtoRebol src rimage1 
+			cvtoRebol dst rimage2
 			isFile: true
 			sl1/data: 0
-			show sl1
+			show [sl1]
 		]
 		[Alert "Not an image" ]
 	]
@@ -41,7 +46,7 @@ loadImage: does [
 
 setFilter:  does [
 	switch flag/text [
-		"Blur No scale" [filter: CV_BLUR] ;CV_BLUR_NO_SCALE
+		"Blur No scale" [filter: CV_BLUR_NO_SCALE]
 		"Blur" 			[filter: CV_BLUR]
 		"Gaussian"  	[filter: CV_GAUSSIAN]
 		"Median" 		[filter: CV_MEDIAN]
@@ -50,20 +55,22 @@ setFilter:  does [
 	if isFile [trackEvent]
 ]
 
-trackEvent: does [ 
+trackEvent: does [  
    pos: round (sl1/data * max_iters)
    if odd? pos [
    ;Si on choisit CV_BILATERAL alors on utilise cvSmooth avec parametres pos = sigma1 et sigma2
-   ;Sinon si c'est CV_MEDIAN, CV_GAUSSIAN ... on utilise les param par défauts. 
+   ;Sinon si c'est CV_MEDIAN, CV_GAUSSIAN ... on utilise les param par défauts.
 		either (filter = CV_BILATERAL) 
-					[cvSmooth src dst CV_BILATERAL 10 10 pos pos]
-					[cvSmooth src dst filter pos 0 0 0]
-				 
-		cvtoRebol dst rimage2 
-	]	
+					[cvSmooth &src &dst CV_BILATERAL 10 10 pos pos]
+					[cvSmooth &src &dst filter pos 0 0 0]		
+		]	
+	cvtoRebol dst rimage2	
 	oct/text: pos
 	show oct
-	recycle
+]
+release: does [
+	cvReleaseImage &src
+	cvReleaseImage &dst
 ]
 
 

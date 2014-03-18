@@ -15,28 +15,27 @@ level: 4
 block_size: 1000
 
 comp: make struct! CvSeq! none
-&comp: struct-address? comp
+&comp: as-pointer! comp
 
-pthreshold1: make struct! int-ptr! reduce [threshold1]
-pthreshold2: make struct! int-ptr! reduce [threshold2]
-
-
+pthreshold1: as-int! threshold1
+pthreshold2: as-int! threshold2
 
 
 ON_SEGMENT: does [
     threshold1: pthreshold1/int
     threshold2: pthreshold2/int
-    cvPyrSegmentation image0 image1 storage &comp level threshold1 + 1 threshold2 + 1
-    cvShowImage "Segmentation" image1
+    cvPyrSegmentation &image0 &image1 storage &comp level threshold1 + 1 threshold2 + 1
+    cvShowImage "Segmentation" &image1
 ]
 
-filename: to-string to-local-file to-string request-file ; to-string join appDir "/images/apple.jpg"
+;filename: to-string to-local-file to-string request-file ; 
+filename: to-string join appDir "/images/lena.jpg"
 wait 0.1
-image: cvLoadImage filename CV_LOAD_IMAGE_UNCHANGED 
-
+image: cvLoadImage filename CV_LOAD_IMAGE_COLOR; CV_LOAD_IMAGE_UNCHANGED 
+&image: as-pointer! image
 
 cvNamedWindow "Source" CV_WINDOW_AUTOSIZE ;0 
-cvShowImage "Source" image
+cvShowImage "Source" &image
 cvNamedWindow "Segmentation" 1 ;0
 
 
@@ -47,8 +46,11 @@ val: negate shift/left 1 level
 image/width: image/width and val 
 image/height: image/height and val
 
-image0: cvCloneImage image
-image1: cvCloneImage image
+image0: cvCloneImage &image
+image1: cvCloneImage &image
+
+&image0: as-pointer! image0
+&image1: as-pointer! image1
 
 ;image1: cvCreateImage image/width image/height IPL_DEPTH_8U 3
 
@@ -56,7 +58,7 @@ image1: cvCloneImage image
 sthreshold1: cvCreateTrackbar "Threshold1" "Segmentation" pthreshold1 255 :ON_SEGMENT 
 sthreshold2: cvCreateTrackbar "Threshold2" "Segmentation" pthreshold2 255 :ON_SEGMENT 
 
-cvShowImage "Segmentation" image1
+cvShowImage "Segmentation" &image1
 cvMoveWindow "Segmentation" 300 50 
 
 ON_SEGMENT

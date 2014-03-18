@@ -71,12 +71,11 @@ selectClassifier: does [
 
 activate: does [
 	;activate cam
-	capture: cvCreateCameraCapture CV_CAP_ANY 
-    
+	&capture: as-pointer! cvCreateCameraCapture CV_CAP_ANY 
     ;get first cam image
-	cvGrabFrame capture
-	isource: cvRetrieveFrame capture
-	
+	cvGrabFrame &capture
+	isource: cvRetrieveFrame &capture
+	&isource: as-pointer! isource
 	; calculate size for face window
     faceWidth: isource/width * .35
     faceHeight: isource/height * .30
@@ -89,45 +88,45 @@ activate: does [
 	
 	
 	; make a reduce view to improve face detection
-	reducedInput: cvCreateImage isource/width / 2  isource/height / 2 IPL_DEPTH_8U 3
+	&reducedInput: as-pointer! cvCreateImage isource/width / 2  isource/height / 2 IPL_DEPTH_8U 3
 	
-	iface: cvCreateImage faceWidth  faceHeight IPL_DEPTH_8U 3
+	&iface: as-pointer! cvCreateImage faceWidth  faceHeight IPL_DEPTH_8U 3
 	
 	;for eyes
 	eyesWidth: isource/width * .20 ; 128 pixels for 640 width pixels image
 	eyesHeight: isource/height * .05 ; 24 pixels for 480 height pixels image
 	
-	leftEye: cvCreateImage  eyesWidth / 2  eyesHeight IPL_DEPTH_8U 3
+	&leftEye: as-pointer! cvCreateImage  eyesWidth / 2  eyesHeight IPL_DEPTH_8U 3
 	
-	rightEye: cvCreateImage eyesWidth / 2  eyesHeight IPL_DEPTH_8U 3
+	&rightEye: as-pointer! cvCreateImage eyesWidth / 2  eyesHeight IPL_DEPTH_8U 3
 	
 	cvNamedWindow "Input" CV_WINDOW_AUTOSIZE
 	cvMoveWindow "Input" 5 170
-	cvZero isource
-	cvShowImage "Input" isource
+	cvZero &isource
+	cvShowImage "Input" &isource
 	
 	;we don't need to show reduced view of input
 	; reducde view is used to improve face detection 
 	;cvNamedWindow "Reduced" CV_WINDOW_AUTOSIZE
 	;cvMoveWindow "Reduced" w + 10 150
-	;cvZero reducedInput
-	;cvShowImage "Reduced" reducedInput
+	;cvZero &reducedInput
+	;cvShowImage "Reduced" &reducedInput
 	
 	;
 	cvNamedWindow "Face" CV_WINDOW_AUTOSIZE
 	cvMoveWindow "Face" w + 10 170
-	cvZero iface
-	cvShowImage "Face" iface
+	cvZero &iface
+	cvShowImage "Face" &iface
 	
 	cvNamedWindow "Left Eye" CV_WINDOW_AUTOSIZE
 	cvMoveWindow "Left Eye" w + 10 455
-	cvZero leftEye
-	cvShowImage "Left Eye" leftEye
+	cvZero &leftEye
+	cvShowImage "Left Eye" &leftEye
 	
 	cvNamedWindow "Right Eye" CV_WINDOW_AUTOSIZE
 	cvMoveWindow "Right Eye" w + (w / 4) + 15 455
-	cvZero rightEye
-	cvShowImage "Right Eye" rightEye
+	cvZero &rightEye
+	cvShowImage "Right Eye" &rightEye
 
 	cvResizeWindow "Input" w h 
 	;cvResizeWindow "Reduced" w / 2 h / 2
@@ -150,10 +149,10 @@ activate: does [
 release: does [
 	if isActive [
 		cvReleaseImage isource
-		cvReleaseImage reducedInput
-		cvReleaseImage iface
-		cvReleaseImage leftEye
-		cvReleaseImage rightEye
+		cvReleaseImage &reducedInput
+		cvReleaseImage &iface
+		cvReleaseImage &leftEye
+		cvReleaseImage &rightEye
 		; tbc
 		;cvReleaseHaarClassifierCascade &&faceCascade
 		;cvReleaseHaarClassifierCascade &&eyesClassifier
@@ -175,22 +174,22 @@ stop: does [
 	cam/data: false
 	cam/rate: none 
 	show cam
-	cvZero isource
-	cvShowImage "Input" isource
-	cvZero reducedInput
-	;cvShowImage "Reduced" reducedInput
-	cvZero iface
-	cvShowImage "Face" iface
-	cvZero leftEye
-	cvShowImage "Left Eye" leftEye
-	cvZero rightEye
-	cvShowImage "Right Eye" rightEye
+	cvZero &isource
+	cvShowImage "Input" &isource
+	cvZero &reducedInput
+	;cvShowImage "Reduced" &reducedInput
+	cvZero &iface
+	cvShowImage "Face" &iface
+	cvZero &leftEye
+	cvShowImage "Left Eye" &leftEye
+	cvZero &rightEye
+	cvShowImage "Right Eye" &rightEye
 ]
 
 
 findFaces: does [
 	; looks for n faces in image  use the fastest variant
-	faces: cvHaarDetectObjects reducedInput faceCascade faceStorage 1.1 minNeighbors flags 20 20
+	faces: cvHaarDetectObjects &reducedInput faceCascade faceStorage 1.1 minNeighbors flags 20 20
 	set-text total faces/total
 	; on traque 1 seul visage  sinon for i 1 faces/total 1
 	; when using CV_HAAR_FIND_BIGGEST_OBJECT flag cvHaarDetectObjects returns 0 or 1 object 
@@ -202,11 +201,11 @@ findFaces: does [
 			wd: (to-integer reverse get-memory faceRect + 8 4) * scale
 	    	hg: (to-integer reverse get-memory faceRect + 12 4) * scale	
 	    	roi: cvRect x y x + wd y + hg
-			cvRectangle isource roi/x roi/y roi/width roi/height 0 255 0 0 thickness lineType 0   ;
-			cvSetImageROI clone roi/x roi/y faceWidth faceHeight ;roi/width roi/height
+			cvRectangle &isource roi/x roi/y roi/width roi/height 0 255 0 0 thickness lineType 0   ;
+			cvSetImageROI &clone roi/x roi/y faceWidth faceHeight ;roi/width roi/height
 			; head can move inside these limits
 			if (y > upLimit) and (y < downLimit) and (x > leftLimit) and (x < rightLimit) 
-				[cvCopy clone iface none  eyesClone: cvCloneImage iface findEyes]
+				[cvCopy &clone &iface none  &eyesClone: as-pointer! cvCloneImage &iface findEyes]
 		]
 	]
 ]
@@ -216,7 +215,7 @@ findEyes: does [
 	       [eyesClassifier: to-local-file join appDir "cascades/haarcascades/haarcascade_eye_tree_eyeglasses.xml"] 
 	       [eyesClassifier: to-local-file join appDir "cascades/haarcascades/haarcascade_mcs_eyepair_big.xml"]
 	
-	eyes: cvHaarDetectObjects iface eyesCascade eyesStorage 1.2 2 CV_HAAR_DO_CANNY_PRUNING 20 20
+	eyes: cvHaarDetectObjects &iface eyesCascade eyesStorage 1.2 2 CV_HAAR_DO_CANNY_PRUNING 20 20
 	
 	if eyes/total > 0 [
 		eyesRect: cvGetSeqElem eyes 1 0 ; we get a pointer 
@@ -225,28 +224,29 @@ findEyes: does [
 		wd: to-integer reverse get-memory eyesRect + 8 4
 	    hg: to-integer reverse get-memory eyesRect + 12 4	
 	    roi: cvRect x y (x + wd) (y + hg)
-		cvRectangle iface roi/x roi/y roi/width roi/height  0 0 255 0 thickness lineType 0
-		cvSetImageROI eyesClone roi/x roi/y eyesWidth / 2 eyesHeight
-		cvCopy eyesClone leftEye none 
-		cvSetImageROI eyesClone roi/x + eyesWidth / 2 roi/y eyesWidth / 2 eyesHeight
-		cvCopy eyesClone rightEye none
+		cvRectangle &iface roi/x roi/y roi/width roi/height  0 0 255 0 thickness lineType 0
+		cvSetImageROI &eyesClone roi/x roi/y eyesWidth / 2 eyesHeight
+		cvCopy &eyesClone &leftEye none 
+		cvSetImageROI &eyesClone roi/x + eyesWidth / 2 roi/y eyesWidth / 2 eyesHeight
+		cvCopy &eyesClone &rightEye none
 	]
 ]
 
 
 showCamera: does [
-    isource: cvRetrieveFrame capture ;  get current image
-    clone: cvCloneImage isource ; really necessary 
-	cvSmooth isource isource CV_GAUSSIAN 3 3 0.0 0.0 
+    isource: cvRetrieveFrame &capture ;  get current image
+    &isource: as-pointer! isource
+    &clone: as-pointer! cvCloneImage &isource ; really necessary 
+	cvSmooth &isource &isource CV_GAUSSIAN 3 3 0.0 0.0 
 	;Downsamples the input image by 2 to get a performance boost w/o loosing quality
-	cvPyrDown isource reducedInput CV_GAUSSIAN_5x5 
+	cvPyrDown &isource &reducedInput CV_GAUSSIAN_5x5 
 	if isFace [findFaces]
-	cvShowImage "Input" isource
-	; cvShowImage "Reduced" reducedInput
-	cvShowImage "Face" iface
-	cvShowImage "Left Eye" leftEye
-	cvShowImage "Right Eye" rightEye
-	cvGrabFrame capture	 ; new image
+	cvShowImage "Input" &isource
+	; cvShowImage "Reduced" &reducedInput
+	cvShowImage "Face" &iface
+	cvShowImage "Left Eye" &leftEye
+	cvShowImage "Right Eye" &rightEye
+	cvGrabFrame &capture	 ; new image
 	set-text mem stats
 ]
 

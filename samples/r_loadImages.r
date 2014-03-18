@@ -25,18 +25,17 @@ cvImage: make object![
     ]
     cvload: func [color] [
     	img: cvLoadImage windowsName color 
+    	&img: as-pointer! img
     	; we use a copie to test cvGetRawData
     	
     	if isTest [
 			copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
-			cvZero copie
-			step: make struct! int-ptr! reduce [img/widthStep]
-	    	&step: struct-address? step
-	    	data: make struct! int-ptr! reduce [img/imageSize]
-	    	&data: struct-address? data 
+			&copie: as-pointer! 
+			cvZero &copie
+	    	&step as-int! img/widthStep
+	    	&data: as-int! img/imageSize
 	    	roi: make struct! cvSize! reduce [0 0]
-			cvGetRawData img &data &step roi
-			&data: data/int          					; get the pointer adress in return
+			cvGetRawData &img &data &step roi
 	    	data: get-memory  &data img/imageSize		;get the data
 			set-memory copie/imageData data]	
 	]
@@ -45,10 +44,10 @@ cvImage: make object![
     	cvNamedWindow windowsName CV_WINDOW_AUTOSIZE
     	cvResizeWindow windowsName 512 512
     	cvMoveWindow windowsName x y
-    	cvShowImage windowsName img
+    	cvShowImage windowsName &img
     	if isTest [
     		cvNamedWindow "copie" CV_WINDOW_AUTOSIZE
-    		cvShowImage "copie" copie
+    		cvShowImage "copie" &copie
     	]
     ]
     

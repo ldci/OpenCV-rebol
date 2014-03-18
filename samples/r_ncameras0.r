@@ -22,6 +22,7 @@ camera: make object![
 	win: make image! 320x240
 	capture: 0
 	image: cvCreateImage 320 240 IPL_DEPTH_8U 3
+	&image: as-pointer! image
 	isActive: false
 	;methodes
     init: make function! [v1 v2 v3 v4 v5] [
@@ -33,13 +34,13 @@ camera: make object![
     	aled/colors/1: red
     	aled/colors/2: orange 
     	if not isActive [
-			if error? try [capture: cvCreateCameraCapture index] [quit]
+			if error? try [&capture: as-pointer! cvCreateCameraCapture index] [quit]
 			
 		]
-		if not none? capture [ 
+		if not none? &capture [ 
 				win/text: "Camera ready" isActive: true
-				image: cvQueryFrame capture ; grab and retrieve image
-				cvZero image
+				image: cvQueryFrame &capture ; grab and retrieve image
+				cvZero &image
 				toRebol
 		]
 		show [aled win]
@@ -58,7 +59,7 @@ camera: make object![
 		if isActive[
 	    	win/rate: none
 			aled/colors/2: orange 
-			cvZero image
+			cvZero &image
 			toRebol
 			win/text: "Camera ready"
 			show [aled win]
@@ -78,8 +79,8 @@ camera: make object![
 	
 	showVideo: does [
 		if isActive [
-		cvGrabFrame capture
-		frame: cvRetrieveFrame capture; 
+		cvGrabFrame &capture
+		frame: cvRetrieveFrame &capture; 
 		;cvQueryFrame capture ; grab and retrieve image
 		win/text: now/time/precise
 		torebol

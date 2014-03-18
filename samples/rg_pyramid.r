@@ -28,9 +28,10 @@ ON_SEGMENT: does [
     ct2/text: to-string threshold2
     show [ct1 ct2]
     if isFile [
-    	cvPyrSegmentation image0 image1 storage &comp level threshold1 + 1 threshold2 + 1
+    	cvPyrSegmentation &image0 &image1 storage &comp level threshold1 + 1 threshold2 + 1
     	cvtoRebol image1 rimage2
     ]
+    recycle
 ]
 
 
@@ -41,8 +42,8 @@ loadImage: does [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
 		    ; load image
-			image: cvLoadImage filename CV_LOAD_IMAGE_COLOR; CV_LOAD_IMAGE_UNCHANGED
-			
+			image: cvLoadImage filename CV_LOAD_IMAGE_COLOR;CV_LOAD_IMAGE_UNCHANGED
+			&image: as-pointer! image
 			;show rebol image
 			cvtoRebol image rimage1 
 			
@@ -55,10 +56,12 @@ loadImage: does [
 			imSizeC/text: join image/width [ " " image/height] 
 			show imSizeC
 			
-			image0: cvCloneImage image
+			image0: cvCloneImage &image
+			&image0: as-pointer! image0
 			
 			; better create output than cvCloneImage image
 			image1: cvCreateImage image/width image/height IPL_DEPTH_8U 3
+			&image1: as-pointer! image1
 			
 			storage: cvCreateMemStorage block_size
 			&&storage:  make struct! int-ptr! reduce [struct-address? storage] 

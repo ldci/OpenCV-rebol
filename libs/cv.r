@@ -43,8 +43,8 @@ do %cvtypes.r ; needs %cxtypes.r
 ;makes a border of the specified type (IPL_BORDER_*) around the copied area. */
                              
 cvCopyMakeBorder: make routine! compose/deep/only [
-	src 	[struct! (first CvArr!)]
-	dst 	[struct! (first CvArr!)]
+	src 	[int];         CvArr!
+	dst 	[int];         CvArr!
 	x  		[integer!] ; in fact CvPoint
 	y		[integer!]
 	bordertype [integer!]
@@ -59,8 +59,8 @@ CV_BILATERAL:	 	4
 
 ;Smoothes array (removes noise)
 cvSmooth: make routine! compose/deep/only [
-	src 		[struct! (first CvArr!)]
-	dst 		[struct! (first CvArr!)]
+	src 		[int]; [struct! (first CvArr!)]
+	dst 		[int]; [struct! (first CvArr!)]
 	smoothtype 	[integer!] ; CV_DEFAULT(CV_GAUSSIAN)
 	param1		[integer!] ; CV_DEFAULT(3)
 	param2		[integer!] ; CV_DEFAULT(0)
@@ -70,8 +70,8 @@ cvSmooth: make routine! compose/deep/only [
 
 ;Convolves the image with the kernel
 cvFilter2D: make routine! compose/deep/only [
-	src 		[struct! (first CvArr!)]
-	dst 		[struct! (first CvArr!)]
+	src 		[int];         CvArr!
+	dst 		[int];         CvArr!
 	kernel		[struct! (first CvMat!)]
 	x  			[integer!] ; in fact CvPoint 
 	y			[integer!] ;CV_DEFAULT(cvPoint(-1,-1))
@@ -79,26 +79,26 @@ cvFilter2D: make routine! compose/deep/only [
 
 ;Finds integral image: SUM(X,Y) = sum(x<X,y<Y)I(x,y)
 cvIntegral: make routine! compose/deep/only [
-	image 		[struct! (first CvArr!)]
-	sum 		[struct! (first CvArr!)]
-	sqsum		[struct! (first CvArr!)] ;CV_DEFAULT(NULL) none
-	tilted_sum	[struct! (first CvArr!)] ;CV_DEFAULT(NULL) none	
+	image 		[int];         CvArr!
+	sum 		[int];         CvArr!
+	sqsum		[int];         CvArr! ;CV_DEFAULT(NULL) none
+	tilted_sum	[int];         CvArr! ;CV_DEFAULT(NULL) none	
 ] cvision "cvIntegral"
 
 ;Smoothes the input image with gaussian kernel and then down-samples it.
 ;dst_width = floor(src_width/2)[+1],
 ;dst_height = floor(src_height/2)[+1]   
 cvPyrDown: make routine! compose/deep/only [
-	src 		[struct! (first CvArr!)]
-	dst 		[struct! (first CvArr!)]
+	src 		[int] ; [struct! (first CvArr!)]
+	dst 		[int] ;[struct! (first CvArr!)]
 	filter		[integer!]; CV_DEFAULT(CV_GAUSSIAN_5x5)
 ] cvision "cvPyrDown"
                    
 ;Up-samples image and smoothes the result with gaussian kernel.
 ;dst_width = src_width*2, dst_height = src_height*2
 cvPyrUp: make routine! compose/deep/only [
-	src 		[struct! (first CvArr!)]
-	dst 		[struct! (first CvArr!)]
+	src 		[int];         CvArr!
+	dst 		[int];         CvArr!
 	filter		[integer!]; CV_DEFAULT(CV_GAUSSIAN_5x5)
 ] cvision "cvPyrUp"
 
@@ -106,7 +106,7 @@ cvPyrUp: make routine! compose/deep/only [
 if opencvVersion > 1.0.0 [
 
 cvCreatePyramid: make routine! compose/deep/only [
-	img 			[struct! (first CvArr!)]
+	img 			[int];         CvArr!
 	extra_layers	[integer!]
 	rate			[decimal!]
 	layer_sizes		[integer!]; pointer to CvSize* ; CV_DEFAULT(0),
@@ -129,10 +129,10 @@ of nearly the same color/brightness using modification of Burt algorithm.
 comp with contain a pointer to sequence (CvSeq)
 of connected components (CvConnectedComp)}
 cvPyrSegmentation: make routine! compose/deep/only [
-	src 			[struct! (first iplImage!)]
-	dst 			[struct! (first iplImage!)]
+	src 			[int]; [struct! (first iplImage!)]
+	dst 			[int];[struct! (first iplImage!)]
 	storage			[struct! (first CvMemStorage!)]
-	comp			[integer!] ; pointer CvSeq**
+	comp			[int] ; pointer CvSeq**
 	level			[integer!]
 	threshold1		[decimal!]
 	threshold2		[decimal!]
@@ -140,8 +140,8 @@ cvPyrSegmentation: make routine! compose/deep/only [
 
 ;Filters image using meanshift algorithm
 cvPyrMeanShiftFiltering: make routine! compose/deep/only [
-	src 		[struct! (first CvArr!)]
-	dst 		[struct! (first CvArr!)]
+	src 		[int];         CvArr!
+	dst 		[int];         CvArr!
 	sp			[decimal!]
 	sr			[decimal!]
 	max_level	[integer!] ;  CV_DEFAULT(1)
@@ -151,8 +151,8 @@ cvPyrMeanShiftFiltering: make routine! compose/deep/only [
 
 ;Segments image using seed "markers"
 cvWatershed: make routine! compose/deep/only [
-	src 		[struct! (first CvArr!)]
-	markers 	[struct! (first CvArr!)]
+	src 		[int];         CvArr!
+	markers 	[int];         CvArr!
 ] cvision "cvWatershed"
 
 CV_INPAINT_NS:      0
@@ -160,9 +160,9 @@ CV_INPAINT_TELEA:   1
 
 ;Inpaints the selected region in the image
 cvInpaint: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	inpaint_mask 	[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	inpaint_mask 	[int];         CvArr!
+	dst 			[int];         CvArr!
 	inpaintRange	[decimal!]
 	flags			[integer!]	
 ] cvision "cvInpaint"
@@ -174,8 +174,8 @@ CV_MAX_SOBEL_KSIZE:		 7
 (aperture_size = 1,3,5,7) or Scharr (aperture_size = -1) operator.
 Scharr can be used only for the first dx or dy derivative }
 cvSobel: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dst 			[int];         CvArr!
 	xorder			[integer!]
 	yorder			[integer!]
 	aperture_size	[integer!];  CV_DEFAULT(3)
@@ -184,8 +184,8 @@ cvSobel: make routine! compose/deep/only [
 ;Calculates the image Laplacian: (d2/dx + d2/dy)I
 cvLaplace: make routine! compose/deep/only [
 "Calculates the image Laplacian: (d2/dx + d2/dy)I"
-            src 			[struct! (first CvArr!)]
-            dst 			[struct! (first CvArr!)]
+            src 			[int] ; CvArr!
+            dst 			[int] ; CvArr!
             aperture_size	[integer!];  CV_DEFAULT(3)
 ] cvision "cvLaplace"        
 
@@ -287,8 +287,8 @@ CV_COLORCVT_MAX:  100
 
 ;Converts input array pixels from one color space to another 
 cvCvtColor: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
+	src 			[int];[struct! (first CvArr!)]
+	dst 			[int]; [struct! (first CvArr!)]
 	code			[integer!]
 ] cvision "cvCvtColor"
 
@@ -302,15 +302,15 @@ CV_WARP_INVERSE_MAP:  16
 
 ;Resizes image (input array is resized to fit the destination array) 
 cvResize: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dst 			[int];         CvArr!
 	interpolation	[integer!] ;CV_DEFAULT( CV_INTER_LINEAR ))
 ] cvision "cvResize"
 
 ;Warps image with affine transform
 cvWarpAffine: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dst 			[int];         CvArr!
 	map_matrix		[struct! (first CvMat!)]
 	flags			[integer!] ;CV_DEFAULT(CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS)
 	fillval			[struct! (first CvScalar!)] ;CV_DEFAULT(cvScalarAll(0))
@@ -335,8 +335,8 @@ cv2DRotationMatrix: make routine! compose/deep/only [
 
 ;Warps image with perspective (projective) transform
 cvWarpPerspective: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dst 			[int];         CvArr!
 	map_matrix		[struct! (first CvMat!)]
 	flags			[integer!] ;CV_DEFAULT(CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS)
 	fillval			[struct! (first CvScalar!)] ;CV_DEFAULT(cvScalarAll(0))
@@ -352,18 +352,18 @@ cvGetPerspectiveTransform: make routine! compose/deep/only [
 
 ;Performs generic geometric transformation using the specified coordinate maps */
 cvWarpPerspective: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
-	mapx			[struct! (first CvArr!)]
-	mapy			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dst 			[int];         CvArr!
+	mapx			[int];         CvArr!
+	mapy			[int];         CvArr!
 	flags			[integer!] ;CV_DEFAULT(CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS)
 	fillval			[struct! (first CvScalar!)] ;CV_DEFAULT(cvScalarAll(0))
 ] cvision "cvWarpPerspective"
 
 ;Performs forward or inverse log-polar image transform
 cvLogPolar: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dest 			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dest 			[int];         CvArr!
 	center			[struct! (first CvPoint2D32f!)]
 	m				[decimal!]
 	flags			[integer!] ;CV_DEFAULT(CV_INTER_LINEAR+CV_WARP_FILL_OUTLIERS)
@@ -394,8 +394,8 @@ cvReleaseStructuringElement: make routine! compose/deep/only [
 ;erodes input image (applies minimum filter) one or more times.
 ;If element pointer is NULL, 3x3 rectangular element is used
 cvErode: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dest 			[struct! (first CvArr!)]
+	src 			[int]; [struct! (first CvArr!)]
+	dest 			[int];[struct! (first CvArr!)]
 	element			[struct! (first IplConvKernel!)] ;pointer CV_DEFAULT(NULL)
 	iterations		[integer!] ;CV_DEFAULT(1)
 ] cvision "cvErode"
@@ -403,8 +403,8 @@ cvErode: make routine! compose/deep/only [
 ;dilates input image (applies maximum filter) one or more times.
 ;If element pointer is NULL, 3x3 rectangular element is used */
 cvDilate: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dest 			[struct! (first CvArr!)]
+	src 			[int];[struct! (first CvArr!)]
+	dest 			[int];[struct! (first CvArr!)]
 	element			[struct! (first IplConvKernel!)] ;pointer CV_DEFAULT(NULL)
 	iterations		[integer!] ;CV_DEFAULT(1)
 ] cvision "cvDilate"
@@ -417,9 +417,9 @@ CV_MOP_BLACKHAT:     6
 
 ;Performs complex morphological transformation
 cvMorphologyEx: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dest 			[struct! (first CvArr!)]
-	temp 			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dest 			[int];         CvArr!
+	temp 			[int];         CvArr!
 	element			[struct! (first IplConvKernel!)] ;pointer CV_DEFAULT(NULL)
 	operation		[integer!] ;CV_DEFAULT(1)
 	iterations		[integer!] ;CV_DEFAULT(1)
@@ -427,7 +427,7 @@ cvMorphologyEx: make routine! compose/deep/only [
 
 ;Calculates all spatial and central moments up to the 3rd order 
 cvMoments: make routine! compose/deep/only [
-	arr 			[struct! (first CvArr!)]
+	arr 			[int];         CvArr!
 	moments 		[struct! (first CvMoments!)]
 	binary			[integer!] ;CV_DEFAULT(0)
 ] cvision "cvMoments"
@@ -463,7 +463,7 @@ cvGetHuMoments: make routine! compose/deep/only [
 
 ;Fetches pixels that belong to the specified line segment and stores them to the buffer. Returns the number of retrieved points.
 cvSampleLine: make routine! compose/deep/only [
-	image 			[struct! (first CvArr!)]
+	image 			[int];         CvArr!
 	pt1_x	 		[integer!];CvPoint
 	pt1_y	 		[integer!];CvPoint
 	pt2_x	 		[integer!];CvPoint
@@ -477,8 +477,8 @@ cvSampleLine: make routine! compose/deep/only [
  dst(x,y) <- src(x + center.x - dst_width/2, y + center.y - dst_height/2).
  Values of pixels with fractional coordinates are retrieved using bilinear interpolation}
 cvGetRectSubPix: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dst 			[int];         CvArr!
 	center	 		[struct! (first CvPoint2D32f!)] ; to be tested
 ] cvision "cvGetRectSubPix"
 
@@ -486,9 +486,9 @@ cvGetRectSubPix: make routine! compose/deep/only [
 matrixarr = ( a11  a12 | b1 )   dst(x,y) <- src(A[x y]' + b)
 ( a21  a22 | b2 )   (bilinear interpolation is used to retrieve pixels with fractional coordinates)}
 cvGetQuadrangleSubPix: make routine! compose/deep/only [
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
-	map_matrix 		[struct! (first CvArr!)]
+	src 			[int];         CvArr!
+	dst 			[int];         CvArr!
+	map_matrix 		[int];         CvArr!
 ] cvision "cvGetQuadrangleSubPix"
 
 ;Methods for comparing two array
@@ -501,19 +501,19 @@ CV_TM_CCOEFF_NORMED: 5
 
 ;Measures similarity between template and overlapped windows in the source image and fills the resultant image with the measurements 
 cvMatchTemplate: make routine! compose/deep/only [
-	image 			[struct! (first CvArr!)]
-	temp1 			[struct! (first CvArr!)]
-	result	 		[struct! (first CvArr!)]
+	image 			[int];         CvArr!
+	temp1 			[int];         CvArr!
+	result	 		[int];         CvArr!
 	method			[integer!]
 ] cvision "cvMatchTemplate"
 ;Computes earth mover distance between two weighted point sets (called signatures)
 cvCalcEMD2: make routine! compose/deep/only [
-	signature1 			[struct! (first CvArr!)]
-	signature2 			[struct! (first CvArr!)]
+	signature1 			[int];         CvArr!
+	signature2 			[int];         CvArr!
 	distance_type		[integer!]
 	distance_func 		[integer!] ; pointer CV_DEFAULT(NULL)
-	cost_matrix	 		[struct! (first CvArr!)]; CV_DEFAULT(NULL)
-	flow				[struct! (first CvArr!)]; CV_DEFAULT(NULL)
+	cost_matrix	 		[int];         CvArr!; CV_DEFAULT(NULL)
+	flow				[int];         CvArr!; CV_DEFAULT(NULL)
 	lower_bound			[decimal!];  CV_DEFAULT(NULL)
 	userdata			[integer!]; null pointer CV_DEFAULT(NULL));
 ] cvision "cvCalcEMD2"
@@ -524,7 +524,7 @@ cvCalcEMD2: make routine! compose/deep/only [
 
 ;Retrieves outer and optionally inner boundaries of white (non-zero) connected components in the black (zero) background
 cvFindContours: make routine! compose/deep/only [
-	image 			[struct! (first CvArr!)]
+	image 			[int];         CvArr!
 	storage 		[struct! (first CvMemStorage!)]
 	first_contour	[struct!(first CvSeq**)]
 	;first_contour	[integer!]; double pointer to CvSeq**
@@ -540,7 +540,7 @@ cvFindContours: make routine! compose/deep/only [
 Calls cvFindNextContour until null pointer is returned or some other condition becomes true.
 Calls cvEndFindContours at the end.}
 cvStartFindContours: make routine! compose/deep/only [
-	image 			[struct! (first CvArr!)]
+	image 			[int];         CvArr!
 	storage 		[struct! (first CvMemStorage!)]
 	header_size		[integer!];CV_DEFAULT(sizeof(CvContour))
 	mode			[integer!];CV_DEFAULT(CV_RETR_LIST)
@@ -601,18 +601,18 @@ cvReadChainPoint: make routine! compose/deep/only [
 
 cvCalcOpticalFlowLK: make routine! compose/deep/only  [
 "Calculates optical flow for 2 images using classical Lucas & Kanade algorithm "
-            prev                    [struct! (first CvArr!)]
-            curr                    [struct! (first CvArr!)]
+            prev                    [int];         CvArr!
+            curr                    [int];         CvArr!
             win_width               [integer!] ;_CvSize
             win_height              [integer!] ;_CvSize
-            velx                    [struct! (first CvArr!)]
-            vely                    [struct! (first CvArr!)]
+            velx                    [int];         CvArr!
+            vely                    [int];         CvArr!
 ] cvision "cvCalcOpticalFlowLK"
 
 cvCalcOpticalFlowBM: make routine! compose/deep/only [
 "Calculates optical flow for 2 images using block matching algorithm "
-            prev                    [struct! (first CvArr!)]
-            curr                    [struct! (first CvArr!)]
+            prev                    [int];         CvArr!
+            curr                    [int];         CvArr!
             win_width               [integer!] ;_CvSize
             win_height              [integer!] ;_CvSize
             shift_width             [integer!] ;_CvSize
@@ -620,18 +620,18 @@ cvCalcOpticalFlowBM: make routine! compose/deep/only [
             max_width               [integer!] ;_CvSize
             max_height              [integer!] ;_CvSize
             use_previous            [integer!]
-            velx                    [struct! (first CvArr!)]
-            vely                    [struct! (first CvArr!)]
+            velx                    [int];         CvArr!
+            vely                    [int];         CvArr!
 ] cvision "cvCalcOpticalFlowBM" 
 
 
 cvCalcOpticalFlowHS: make routine! compose/deep/only [
 "Calculates Optical flow for 2 images using Horn & Schunck algorithm"
-            prev                    [struct! (first CvArr!)]
-            curr                    [struct! (first CvArr!)]
+            prev                    [int];         CvArr!
+            curr                    [int];         CvArr!
             use_previous            [integer!]
-            velx                    [struct! (first CvArr!)]
-            vely                    [struct! (first CvArr!)]
+            velx                    [int];         CvArr!
+            vely                    [int];         CvArr!
             lambda                  [decimal!]
             criteria                [struct! (first CvTermCriteria!)]
 ] cvision "cvCalcOpticalFlowHS"
@@ -642,8 +642,8 @@ CV_LKFLOW_INITIAL_GUESSES:   4
         
 cvCalcOpticalFlowPyrLK:  make routine! compose/deep/only  [
 "It is Lucas & Kanade method, modified to use pyramids"
-            prev                    [struct! (first CvArr!)]
-            curr                    [struct! (first CvArr!)]
+            prev                    [int];         CvArr!
+            curr                    [int];         CvArr!
             prev_features           [struct! (first CvPoint2D32f!)] ; *pointer 
             curr_features           [struct! (first CvPoint2D32f!)] ;*pointer 
             count                   [integer!]
@@ -660,10 +660,10 @@ if opencvVersion > 1.0.0 [
 
 cvCalcAffineFlowPyrLK: make routine! compose/deep/only [
 "Modification of a previous sparse optical flow algorithm to calculate affine flow "
-            prev                    [struct! (first CvArr!)]
-            curr                    [struct! (first CvArr!)]
-            prev_pyr                [struct! (first CvArr!)]
-            curr_pyr                [struct! (first CvArr!)]
+            prev                    [int];         CvArr!
+            curr                    [int];         CvArr!
+            prev_pyr                [int];         CvArr!
+            curr_pyr                [int];         CvArr!
             prev_features           [struct! (first CvPoint2D32f!)] ; *pointer 
             curr_features           [struct! (first CvPoint2D32f!)] ;*pointer 
             matrices                [struct! (first float-ptr!)]
@@ -679,9 +679,9 @@ cvCalcAffineFlowPyrLK: make routine! compose/deep/only [
      
 cvEstimateRigidTransform:  make routine! compose/deep/only [
 "Estimate rigid transformation between 2 images or 2 point sets"
-            A                       [struct! (first CvArr!)]
-            B                       [struct! (first CvArr!)]
-            M                       [struct! (first CvArr!)]
+            A                       [int];         CvArr!
+            B                       [int];         CvArr!
+            M                       [int];         CvArr!
             full_affine             [integer!]
             return:                 [integer!]
 ] cvision "cvEstimateRigidTransform"
@@ -700,17 +700,17 @@ cvEstimateRigidTransform:  make routine! compose/deep/only [
  
 cvUpdateMotionHistory: make routine! compose/deep/only [
 "Updates motion history image given motion silhouette"
-            silhouette              [struct! (first CvArr!)]
-            mhi                     [struct! (first CvArr!)]
+            silhouette              [int];         CvArr!
+            mhi                     [int];         CvArr!
             timestamp               [decimal!]
             duration                [decimal!]
 ] cvision "cvUpdateMotionHistory"
                
 cvCalcMotionGradient: make routine! compose/deep/only [
 "Calculates gradient of the motion history image and fills a mask indicating where the gradient is valid "
-            mhi                     [struct! (first CvArr!)]
-            mask                    [struct! (first CvArr!)]
-            orientation             [struct! (first CvArr!)]
+            mhi                     [int];         CvArr!
+            mask                    [int];         CvArr!
+            orientation             [int];         CvArr!
             delta1                  [decimal!]
             delta2                  [decimal!]
             aperture_size           [integer!] ;CV_DEFAULT(3))
@@ -720,9 +720,9 @@ cvCalcGlobalOrientation: make routine! compose/deep/only [
 {Calculates average motion direction within a selected motion region 
 (region can be selected by setting ROIs and/or by composing a valid gradient mask
  with the region mask) }
-            orientation             [struct! (first CvArr!)]
-            mask                    [struct! (first CvArr!)]
-            mhi                     [struct! (first CvArr!)]
+            orientation             [int];         CvArr!
+            mask                    [int];         CvArr!
+            mhi                     [int];         CvArr!
             timestamp               [decimal!]
             duration                [decimal!]
             return:                 [decimal!]
@@ -730,8 +730,8 @@ cvCalcGlobalOrientation: make routine! compose/deep/only [
 
 cvSegmentMotion: make routine! compose/deep/only [
 "Splits a motion history image into a few parts corresponding to separate independent motions (e.g. left hand, right hand)"
-            mhi                     [struct! (first CvArr!)]
-            seg_mask                [struct! (first CvArr!)]
+            mhi                     [int];         CvArr!
+            seg_mask                [int];         CvArr!
             storage                 [struct! (first CvMemStorage!)]
             timestamp               [decimal!]
             seg_thresh              [decimal!]
@@ -741,38 +741,38 @@ cvSegmentMotion: make routine! compose/deep/only [
 ;*********************** Background statistics accumulation *****************************/
 cvAcc:  [
 "Adds image to accumulator"
-            image                   [struct! (first CvArr!)]
-            sum                     [struct! (first CvArr!)]
-            mask                    [struct! (first CvArr!)] ; CV_DEFAULT(NULL))
+            image                   [int];         CvArr!
+            sum                     [int];         CvArr!
+            mask                    [int];         CvArr! ; CV_DEFAULT(NULL))
 ] cvision "cvAcc"  
 
 cvSquareAcc:  make routine! compose/deep/only [
 "Adds squared image to accumulator"
-            image                   [struct! (first CvArr!)]
-            sum                     [struct! (first CvArr!)]
-            mask                    [struct! (first CvArr!)] ; CV_DEFAULT(NULL))
+            image                   [int];         CvArr!
+            sum                     [int];         CvArr!
+            mask                    [int];         CvArr! ; CV_DEFAULT(NULL))
 ]  cvision "cvSquareAcc"    
 
 cvMultiplyAcc: make routine! compose/deep/only [
 "Adds a product of two images to accumulator"
-            image1                  [struct! (first CvArr!)]
-            image2                  [struct! (first CvArr!)]
-            acc                     [struct! (first CvArr!)]
-            mask                    [struct! (first CvArr!)] ; CV_DEFAULT(NULL))
+            image1                  [int];         CvArr!
+            image2                  [int];         CvArr!
+            acc                     [int];         CvArr!
+            mask                    [int];         CvArr! ; CV_DEFAULT(NULL))
 ] cvision "cvMultiplyAcc"
 
 cvRunningAvg: make routine! compose/deep/only [
 "Adds image to accumulator with weights: acc = acc*(1-alpha) + image*alpha "
-            image                   [struct! (first CvArr!)]
-            acc                     [struct! (first CvArr!)]
+            image                   [int];         CvArr!
+            acc                     [int];         CvArr!
             alpha                   [decimal!]
-            mask                    [struct! (first CvArr!)] ; CV_DEFAULT(NULL))
+            mask                    [int];         CvArr! ; CV_DEFAULT(NULL))
 ] cvision "cvRunningAvg"
 
 ;******************************** Tracking ********************************
 cvCamShift: make routine! compose/deep/only [
 "Implements CAMSHIFT algorithm - determines object position, size and orientation from the object histogram back project (extension of meanshift)"
-            prob_image              [struct! (first CvArr!)]
+            prob_image              [int];         CvArr!
             window_x                [integer!] ;_CvRect
             window_y                [integer!]
             window_w                [integer!]
@@ -785,7 +785,7 @@ cvCamShift: make routine! compose/deep/only [
 
 cvMeanShift: make routine! compose/deep/only [
 "Implements MeanShift algorithm -determines object position from the object histogram back project"
-            prob_image              [struct! (first CvArr!)]
+            prob_image              [int];         CvArr!
             window_x                [integer!] ;_CvRect
             window_y                [integer!]
             window_w                [integer!]
@@ -937,14 +937,14 @@ cvContourPerimeter: func [[contour]] [cvArcLength contour CV_WHOLE_SEQ 1]
 
 cvBoundingRect: make routine! compose/deep/only [
 "Calculates contour boundning rectangle (update=1) or just retrieves pre-calculated rectangle (update=0)"
-            points                      [struct! (first CvArr!)]
+            points                      [int];         CvArr!
             update                      [integer!] ;CV_DEFAULT(0)
             return:                     [CvRect!]; not a pointer just a struct
 ] cvision "cvBoundingRect"
 
 cvContourArea:  [
 "Calculates area of a contour or contour segment"
-            points                      [struct! (first CvArr!)]
+            points                      [int];         CvArr!
             slice_start_index           [integer!] ;_CvSlice CV_DEFAULT(CV_WHOLE_SEQ))
             slice_end_index             [integer!] ;_CvSlice CV_DEFAULT(CV_WHOLE_SEQ))
             return:                     [decimal!]
@@ -953,14 +953,14 @@ cvContourArea:  [
 
 cvMinAreaRect2: make routine! compose/deep/only  [
 "Finds minimum area rotated rectangle bounding a set of points"
-             points                      [struct! (first CvArr!)]
+             points                      [int];         CvArr!
              storage                     [struct! (first CvMemStorage!)] ;CV_DEFAULT(NULL)
              return:                     [CvBox2D!]
 ] cvision "cvMinAreaRect2"
 
 cvMinEnclosingCircle: make routine! compose/deep/only [
 "Finds minimum enclosing circle for a set of points"
-            points                      [struct! (first CvArr!)]
+            points                      [int];         CvArr!
             center                      [struct! (first CvPoint2D32f!)] ;* pointer
             radius                      [struct! (first float-ptr!)]
             return:                     [integer!]
@@ -1019,7 +1019,7 @@ CV_COUNTER_CLOCKWISE: 2
 
 cvConvexHull2: make routine! compose/deep/only  [
 "Calculates exact convex hull of 2d point set"
-            input                       [struct! (first CvArr!)]
+            input                       [int];         CvArr!
             hull_storage                [struct! (first int-ptr!)] ; void * ;CV_DEFAULT(NULL)
             orientation                 [integer!]  ;CV_DEFAULT(CV_CLOCKWISE)
             return_points               [integer!]   ;CV_DEFAULT(0)
@@ -1028,13 +1028,13 @@ cvConvexHull2: make routine! compose/deep/only  [
 
 cvCheckContourConvexity: make routine! compose/deep/only [
 "Checks whether the contour is convex or not (returns 1 if convex, 0 if not)"
-            contour                       [struct! (first CvArr!)]
+            contour                       [int];         CvArr!
             return:                       [integer!]
 ] cvision "cvCheckContourConvexity"
 
 cvConvexityDefects: make routine! compose/deep/only [
-            contour                       [struct! (first CvArr!)]
-            convexhull                    [struct! (first CvArr!)]
+            contour                       [int];         CvArr!
+            convexhull                    [int];         CvArr!
             storage                       [struct! (first CvMemStorage!)] ;CV_DEFAULT(NULL)
             return:                       [struct!(first CvSeq!)]
 ] cvision "cvConvexityDefects"
@@ -1042,7 +1042,7 @@ cvConvexityDefects: make routine! compose/deep/only [
 
 cvFitEllipse2: make routine! compose/deep/only [
 "Fits ellipse into a set of 2d points"
-            points                       [struct! (first CvArr!)]
+            points                       [int];         CvArr!
             return:                      [CvBox2D!] ; may be problematic
 ] cvision "cvFitEllipse2"
 
@@ -1065,14 +1065,14 @@ cvBoxPoints: make routine! compose/deep/only  [
 cvPointSeqFromMat: make routine! compose/deep/only  [
 "Initializes sequence header for a matrix (column or row vector) of points - a wrapper for cvMakeSeqHeaderForArray (it does not initialize bounding rectangle!!!)"
             seq_kind                        [integer!]
-            mat                             [struct! (first CvArr!)]
+            mat                             [int];         CvArr!
             contour_header                  [struct! (first CvContour!)]
             block                           [struct! (first CvSeqBlock!)]
             return:                         [struct!(first CvSeq!)]
 ] cvision "cvPointSeqFromMat"
 
 cvPointPolygonTest: make routine! compose/deep/only [      
-            contour                         [struct! (first CvArr!)]
+            contour                         [int];         CvArr!
             pt_x                            [decimal!]
             pt_y                            [decimal!]
             measure_dist                    [integer!]
@@ -1164,16 +1164,16 @@ cvCalcBayesianProb: make routine! compose/deep/only [
 ] cvision "cvCalcBayesianProb"
  
 cvCalcArrHist: make routine! compose/deep/only [
-            arr                         [struct! (first CvArr!)] 			; ** CvArr
+            arr                         [int];         CvArr! 			; ** CvArr
             hist                        [struct! (first CvHistogram!)]
             accumulate                  [integer!]          				; CV_DEFAULT(0)
-            mask                        [struct! (first CvArr!)]           ;CV_DEFAULT(NULL)
+            mask                        [int];         CvArr!           ;CV_DEFAULT(NULL)
 ] cvision "cvCalcArrHist" 
 
 cvCalcArrBackProject: make routine! compose/deep/only [
 "Calculates back project"
-            image                       [struct! (first CvArr!)] ; ** CvArr
-            dst                         [struct! (first CvArr!)]; * CvArr
+            image                       [int];         CvArr! ; ** CvArr
+            dst                         [int];         CvArr!; * CvArr
             hist                        [struct! (first CvHistogram!)]
 ] cvision "cvCalcArrBackProject"
  
@@ -1182,8 +1182,8 @@ cvCalcBackProject: func [image dst hist] [cvCalcArrBackProject image dst hist]
 
 cvCalcArrBackProjectPatch: make routine! compose/deep/only  [
 "Does some sort of template matching but compares histograms of template and each window location"
-            image                       [struct! (first CvArr!)] ; ** CvArr
-            dst                         [struct! (first CvArr!)] ; * CvArr
+            image                       [int];         CvArr! ; ** CvArr
+            dst                         [int];         CvArr! ; * CvArr
             range_w                     [integer!] ; _CvSize
             range_h                     [integer!] ; _CvSize
             hist                        [struct! (first CvHistogram!)]
@@ -1205,8 +1205,8 @@ cvCalcProbDensity:  [
 
 cvEqualizeHist: make routine! compose/deep/only [
         "equalizes histogram of 8-bit single-channel image"
-            src                            [struct! (first CvArr!)]
-            dst                            [struct! (first CvArr!)]
+            src                            [int]; [struct! (first CvArr!)]
+            dst                            [int]; [struct! (first CvArr!)]
 ] cvision "cvEqualizeHist"
 
 CV_VALUE:  1
@@ -1241,12 +1241,12 @@ CV_DIST_MASK_PRECISE: 0
 
 cvDistTransform: make routine! compose/deep/only  [
 "Applies distance transform to binary image"
-            src                 [struct! (first CvArr!)]
-            dst                 [struct! (first CvArr!)]
+            src                 [int];         CvArr!
+            dst                 [int];         CvArr!
             distance_type       [integer!] ; CV_DEFAULT(CV_DIST_L2)
             mask_size           [integer!] ; CV_DEFAULT(3)
             mask                [struct! (first float-ptr!)]; CV_DEFAULT(NULL)
-            labels              [struct! (first CvArr!)] ; CV_DEFAULT(NULL) 
+            labels              [int];         CvArr! ; CV_DEFAULT(NULL) 
 ] cvision "cvDistTransform"
      
 ; Types of thresholding 
@@ -1260,8 +1260,8 @@ CV_THRESH_OTSU:        8  ; use Otsu algorithm to choose the optimal threshold v
 
 
 cvThreshold: make routine! compose/deep/only  [
-            src                 [struct! (first CvArr!)]
-            dst                 [struct! (first CvArr!)]
+            src                 [int] ; CvArr!
+            dst                 [int] ; CvArr!
             threshold           [decimal!]
             max_value           [decimal!]
             threshold_type      [integer!]
@@ -1277,8 +1277,8 @@ CV_ADAPTIVE_THRESH_GAUSSIAN_C:  1
 
 cvAdaptiveThreshold: make routine! compose/deep/only [
 "Applies adaptive threshold to grayscale image."
-            src                 [struct! (first CvArr!)]
-            dst                 [struct! (first CvArr!)]
+            src                 [int] ;CvArr!
+            dst                 [int] ;CvArr!
             max_value           [decimal!]
             adaptive_method     [integer!]  ;CV_DEFAULT(CV_ADAPTIVE_THRESH_MEAN_C)
             threshold_type      [integer!]  ; CV_DEFAULT(CV_THRESH_BINARY)
@@ -1291,7 +1291,7 @@ CV_FLOODFILL_MASK_ONLY:      [shift/left 1 17]
 
 cvFloodFill: make routine! compose/deep/only  [
 "Fills the connected component until the color difference gets large enough"
-            image               [struct! (first CvArr!)]
+            image               [int];         CvArr!
             seed_point_x        [integer!]
             seed_point_y        [integer!]
             new_val0            [decimal!]    ;CvScalar
@@ -1308,7 +1308,7 @@ cvFloodFill: make routine! compose/deep/only  [
             up_diff3            [decimal!]    ;CvScalar CV_DEFAULT(cvScalarAll(0)
             comp                [struct! (first CvConnectedComp!)]
             flags               [integer!]  ;CV_DEFAULT(4)
-            mask                [struct! (first CvArr!)]    ; CV_DEFAULT(NULL)  
+            mask                [int];         CvArr!    ; CV_DEFAULT(NULL)  
 ] cvision "cvFloodFill"
 
 ;*********************** Feature detection  ***************************
@@ -1316,8 +1316,8 @@ cvFloodFill: make routine! compose/deep/only  [
 CV_CANNY_L2_GRADIENT:  [shift/left 1 31]
 
 cvCanny: make routine! compose/deep/only  [
-            image               [struct! (first CvArr!)]
-            edges               [struct! (first CvArr!)]
+            image               [int]; [struct! (first CvArr!)]
+            edges               [int]; [struct! (first CvArr!)]
             threshold1          [decimal!]
             threshold2          [decimal!]
             aperture_size       [integer!] ; CV_DEFAULT(3)
@@ -1326,31 +1326,31 @@ cvCanny: make routine! compose/deep/only  [
 ;Applying threshold to the result gives coordinates of corners
 cvPreCornerDetect: make routine! compose/deep/only [
 "Calculates constraint image for corner detection Dx^2 * Dyy + Dxx * Dy^2 - 2 * Dx * Dy * Dxy."
-            image               [struct! (first CvArr!)]
-            edges               [struct! (first CvArr!)]
+            image               [int];         CvArr!
+            edges               [int];         CvArr!
             aperture_size       [integer!] ; CV_DEFAULT(3)
 ] cvision "cvPreCornerDetect" 
 
 cvCornerEigenValsAndVecs: make routine! compose/deep/only [
 "Calculates eigen values and vectors of 2x2 gradient covariation matrix at every image pixel"
-            image               [struct! (first CvArr!)]
-            eigenvv             [struct! (first CvArr!)]
+            image               [int];         CvArr!
+            eigenvv             [int];         CvArr!
             block_size          [integer!]
             aperture_size       [integer!] ; CV_DEFAULT(3)
 ] cvision "cvCornerEigenValsAndVecs"
 
 cvCornerMinEigenVal: make routine! compose/deep/only  [
         "Calculates minimal eigenvalue for 2x2 gradient covariation matrix at every image pixel"
-            image               [struct! (first CvArr!)]
-            eigenval            [struct! (first CvArr!)]
+            image               [int];         CvArr!
+            eigenval            [int];         CvArr!
             block_size          [integer!]
             aperture_size       [integer!] ; CV_DEFAULT(3)
 ] cvision "cvCornerMinEigenVal"
 
 cvCornerHarris: make routine! compose/deep/only[
 "Harris corner detector: Calculates det(M) - k*(trace(M)^2), where M is 2x2 gradient covariation matrix for each pixel"    
-            image               [struct! (first CvArr!)]
-            harris_responce     [struct! (first CvArr!)]
+            image               [int];         CvArr!
+            harris_responce     [int];         CvArr!
             block_size          [integer!]
             aperture_size       [integer!] ; CV_DEFAULT(3)
             k                   [decimal!]   ; CV_DEFAULT(0.04)
@@ -1358,7 +1358,7 @@ cvCornerHarris: make routine! compose/deep/only[
 
 cvFindCornerSubPix: make routine! compose/deep/only  [
 "Adjust corner position using some sort of gradient search"
-            image               [struct! (first CvArr!)]
+            image               [int];         CvArr!
             corners             [struct! (first CvPoint2D32f!)] ; pointer
             count               [integer!]
             win_w               [integer!] ; CvSize
@@ -1370,14 +1370,14 @@ cvFindCornerSubPix: make routine! compose/deep/only  [
 
 cvGoodFeaturesToTrack: make routine! compose/deep/only [
 "Finds a sparse set of points within the selected region that seem to be easy to track"
-            image               [struct! (first CvArr!)]
-            eig_image           [struct! (first CvArr!)]
-            temp_image          [struct! (first CvArr!)]
+            image               [int];         CvArr!
+            eig_image           [int];         CvArr!
+            temp_image          [int];         CvArr!
             corners             [struct! (first CvPoint2D32f!)] ; pointer
             corner_count        [struct! (first int-ptr!)]
             quality_level       [decimal!]
             min_distance        [decimal!]
-            mask                [struct! (first CvArr!)]   ;CV_DEFAULT(NULL)
+            mask                [int];         CvArr!   ;CV_DEFAULT(NULL)
             block_size          [integer!] ;CV_DEFAULT(3)
             use_harris          [integer!] ; CV_DEFAULT(0)
             k                   [decimal!]   ; CV_DEFAULT(0.04)
@@ -1398,7 +1398,7 @@ CV_HOUGH_GRADIENT: 		3
 
 cvHoughLines2: make routine! compose/deep/only  [
 "Finds lines on binary image using one of several methods"
-            image               [struct! (first CvArr!)]
+            image               [int] ;        CvArr!
             line_storage        [struct! (first int-ptr!)] ;*void
             method              [integer!]
             rho                 [decimal!]
@@ -1411,7 +1411,7 @@ cvHoughLines2: make routine! compose/deep/only  [
 
 cvHoughCircles: make routine! compose/deep/only  [
 "Finds circles in the image"
-            image               [struct! (first CvArr!)]
+            image               [int]
             circle_storage      [struct! (first int-ptr!)] ;*void
             method              [integer!]
             dp                  [decimal!]
@@ -1425,7 +1425,7 @@ cvHoughCircles: make routine! compose/deep/only  [
         
 cvFitLine: make routine! compose/deep/only  [
 "Fits a line into set of 2d or 3d points in a robust way (M-estimator technique)"
-            points              [struct! (first CvArr!)]
+            points              [int];         CvArr!
             dist_type           [integer!]
             param               [decimal!]
             reps                [decimal!]
@@ -1455,7 +1455,7 @@ CV_HAAR_FIND_BIGGEST_OBJECT: 4
 CV_HAAR_DO_ROUGH_SEARCH:     8
 
 cvHaarDetectObjects: make routine! compose/deep/only [
-            image               [struct! (first CvArr!)]
+            image               [int]; CvArr!
             cascade             [struct! (first CvHaarClassifierCascade!)]
             storage             [struct! (first CvMemStorage!)]
             scale_factor        [decimal!]  ;CV_DEFAULT(1.1)
@@ -1469,9 +1469,9 @@ cvHaarDetectObjects: make routine! compose/deep/only [
 cvSetImagesForHaarClassifierCascade: make routine! compose/deep/only  [
         "sets images for haar classifier cascade"
             cascade             [struct! (first CvHaarClassifierCascade!)]
-            sum                 [struct! (first CvArr!)]
-            squm                [struct! (first CvArr!)]
-            tilted_sum          [struct! (first CvArr!)]
+            sum                 [int];         CvArr!
+            squm                [int];         CvArr!
+            tilted_sum          [int];         CvArr!
             scale               [decimal!]
 ] cvision "cvSetImagesForHaarClassifierCascade"
 
@@ -1487,8 +1487,8 @@ cvRunHaarClassifierCascade: make routine! compose/deep/only  [
 ;******************** Camera Calibration and Rectification functions ***************
  cvUndistort2: make routine! compose/deep/only  [
 "transforms the input image to compensate lens distortion"
-            src                     [struct! (first CvArr!)]
-            dst                     [struct! (first CvArr!)]
+            src                     [int];         CvArr!
+            dst                     [int];         CvArr!
             intrinsic_matrix        [struct! (first CvMat!)]
             distortion_coeffs       [struct! (first CvMat!)]
 ] cvision "cvUndistort2"
@@ -1497,13 +1497,13 @@ cvInitUndistortMap: make routine! compose/deep/only [
 "computes transformation map from intrinsic camera parameters that can used by cvRemap"
             intrinsic_matrix        [struct! (first CvMat!)]
             distortion_coeffs       [struct! (first CvMat!)]
-            mapx                    [struct! (first CvArr!)]
-            mapy                    [struct! (first CvArr!)]
+            mapx                    [int];         CvArr!
+            mapy                    [int];         CvArr!
 ] cvision "cvInitUndistortMap"
 
 cvRodrigues2: make routine! compose/deep/only [
 "converts rotation vector to rotation matrix or vice versa"
-            src                     [struct! (first CvArr!)]
+            src                     [int];         CvArr!
             dst                     [struct! (first CvMat!)]
             jacobian                [struct! (first CvMat!)] ; CV_DEFAULT(0)
             return:                 [integer!]
@@ -1575,7 +1575,7 @@ cvFindChessboardCorners: make routine! compose/deep/only  [
 
 cvDrawChessboardCorners: make routine! compose/deep/only   [
         "Draws individual chessboard corners or the whole chessboard detected"
-            image                   [struct! (first CvArr!)]  ; 
+            image                   [int];         CvArr!  ; 
             pattern_size_w          [integer!]    ; _CvSize
             pattern_size_h          [integer!]    ; _CvSize
             corners                 [struct! (first CvPoint2D32f!)] ; pointer

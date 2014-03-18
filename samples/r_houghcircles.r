@@ -33,29 +33,30 @@ loadImage: does [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
 			picture: cvLoadImage filename  CV_LOAD_IMAGE_COLOR
+			&picture: as-pointer! picture
 			w: picture/width 
 			h: picture/height 
 			
-			greyImg: cvCreateImage w h IPL_DEPTH_8U 1
-			cannyImg: cvCreateImage w h IPL_DEPTH_8U 1
-			drawnImg: cvCreateImage w h IPL_DEPTH_8U 3
-			contrastImg: cvCreateImage w h IPL_DEPTH_8U 1
+			&greyImg: as-pointer! cvCreateImage w h IPL_DEPTH_8U 1
+			&cannyImg: as-pointer! cvCreateImage w h IPL_DEPTH_8U 1
+			&drawnImg: as-pointer! cvCreateImage w h IPL_DEPTH_8U 3
+			&contrastImg: as-pointer! cvCreateImage w h IPL_DEPTH_8U 1
 			storage: cvCreateMemStorage 0
     		
 			cvNamedWindow "Canny" CV_WINDOW_AUTOSIZE
 			cvNamedWindow "Threshold" CV_WINDOW_AUTOSIZE
 			cvNamedWindow "Image" CV_WINDOW_AUTOSIZE
 	
-			cvEqualizeHist greyImg greyImg
-			cvCvtColor picture greyImg CV_BGR2GRAY
+			cvEqualizeHist &greyImg &greyImg
+			cvCvtColor &picture &greyImg CV_BGR2GRAY
 			
-			cvCopy picture drawnImg none
+			cvCopy &picture &drawnImg none
 			
 			cvMoveWindow "Canny" 100  picture/height + 100
 			cvMoveWindow "Threshold" 300  picture/height + 100
-			cvShowImage "Threshold" contrastImg
-			cvShowImage "Canny" cannyImg
-			cvShowImage "Image" drawnImg
+			cvShowImage "Threshold" &contrastImg
+			cvShowImage "Canny" &cannyImg
+			cvShowImage "Image" &drawnImg
 			
 			if error? try [maxSize: max picture/height picture/width] [maxSize: 512] 
 			
@@ -83,12 +84,12 @@ processImage: does [
 	if isFile [
 	pt1: make struct! CvPoint! [0 0]
 	pt2: make struct! CvPoint! [0 0]
-	cvZero cannyImg
+	cvZero &cannyImg
 	i: 0
 	
-	cvThreshold greyImg contrastImg threshold threshold_max  CV_THRESH_TOZERO_INV
-	cvCanny contrastImg cannyImg  lowThresh highThresh * 3 3
-	circles: cvHoughCircles cannyImg storage CV_HOUGH_GRADIENT dp minDist param1 param2  minRadius maxRadius
+	cvThreshold &greyImg &contrastImg threshold threshold_max  CV_THRESH_TOZERO_INV
+	cvCanny &contrastImg &cannyImg  lowThresh highThresh * 3 3
+	circles: cvHoughCircles &cannyImg storage CV_HOUGH_GRADIENT dp minDist param1 param2  minRadius maxRadius
 		
 	for i 1 circles/total 1 [
 		p: cvGetSeqElem circles i
@@ -102,12 +103,12 @@ processImage: does [
 		pt1/y: to-integer first bin-to-float v2
 		pt2/x: to-integer first bin-to-float v3
 		pt2/y: to-integer first bin-to-float v4
-        cvCircle cannyImg pt1/x pt1/y pt2/x pt2/y 0.0 255.0 0.0 0.0 -1 CV_AA 0 
+        cvCircle &cannyImg pt1/x pt1/y pt2/x pt2/y 0.0 255.0 0.0 0.0 -1 CV_AA 0 
 	]
 	
-	cvShowImage "Threshold" contrastImg
-	cvShowImage "Canny" cannyImg
-	cvShowImage "Image" drawnImg
+	cvShowImage "Threshold" &contrastImg
+	cvShowImage "Canny" &cannyImg
+	cvShowImage "Image" &drawnImg
 	]		
 ]
 
@@ -174,9 +175,9 @@ mainwin: layout/size [
     
     
 	
-	at 460x5 btn 50 "Quit" [if isFile [cvReleaseImage picture cvReleaseImage greyImg 
-							cvReleaseImage cannyImg cvReleaseImage drawnImg 
-							cvReleaseImage contrastImg] 
+	at 460x5 btn 50 "Quit" [if isFile [cvReleaseImage picture cvReleaseImage &picture cvReleaseImage &greyImg 
+							cvReleaseImage &cannyImg cvReleaseImage &drawnImg 
+							cvReleaseImage &contrastImg] 
 	                          quit]
 	] 535x600
 center-face mainwin

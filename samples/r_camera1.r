@@ -12,21 +12,24 @@ cvStartWindowThread ; separate window thread
 nbhsize: [7 5 3 1]
 neighbourhoodSize: 7 ; for laplace odd and max = 7 
 
-capture: cvCreateCameraCapture CV_CAP_ANY 							; create a capture using default webcam
-image: make struct! IplImage! second cvQueryFrame capture 			; get the first image 
+; create a capture using default webcam							
+&capture: as-pointer! cvCreateCameraCapture CV_CAP_ANY  
+; get the first image 
+image: cvQueryFrame &capture 			
 ;for cvLaplace only IPL_DEPTH_32F IPL_DEPTH_16S as destination image
-laplace: cvCreateImage image/width image/height IPL_DEPTH_32F image/nChannels
-
+&laplace: as-pointer! cvCreateImage image/width image/height IPL_DEPTH_32F image/nChannels
+&image: as-pointer! image
 
 
 showCamera: has [frame] [
-	frame: cvQueryFrame capture   
-	cvtoRebol/fit frame rimage1					; transform to REBOL
-	cvLaplace frame laplace neighbourhoodSize ; 32 bit image
-	cvConvertImage laplace  frame 0    		  ; 32 -> 24 bit image
-	cvtoRebol/fit  frame rimage2					; transform to REBOL
+	frame: cvQueryFrame &capture   
+	&frame: as-pointer! frame
+	cvtoRebol frame rimage1					; transform to REBOL
+	cvLaplace &frame &laplace neighbourhoodSize ; 32 bit image
+	cvConvertImage &laplace  &frame 0    		  ; 32 -> 24 bit image
+	cvtoRebol  frame rimage2					; transform to REBOL
 	frame: none
-	mem/text: stats / (10 ** 6) 
+	mem/text: round/to stats / (10 ** 6) 0.01
 	show mem 
 ]
 
@@ -48,10 +51,10 @@ mainwin: layout/size [
 	at 20x5
 	btn 100 "Start" #"s" [cam/colors/2: red show cam rimage1/rate: 24 show rimage1 ]
 	btn 100 "Pause" #"p" [cam/colors/2: green show cam hideCamera ]
-	choice silver 30 data nbhsize [neighbourhoodSize: to-integer face/text]
+	choice black 30 data nbhsize [neighbourhoodSize: to-integer face/text]
 	mem: info 100 
 	pad 170
-	btn 100 "Quit"  #"q" [cvReleaseImage laplace cvReleaseCapture capture quit]
+	btn 100 "Quit"  #"q" [cvReleaseImage &laplace cvReleaseCapture &capture quit]
 	space 0x0
     at 5x30 rimage1: image 320x240 black
 		with [rate: none]

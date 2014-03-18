@@ -35,13 +35,14 @@ camera: make object![
     	win: 	v5
     	aled/data: true
     	if not isActive [
-			if error? try [capture: cvCreateCameraCapture index] [quit]
+			if error? try [&capture: as-pointer! cvCreateCameraCapture index] [quit]
 		]
-		if not none? capture [ 
+		if not none? &capture [ 
 				win/rate: none
 				win/text: "Camera ready" isActive: true
-				image: cvQueryFrame capture ; grab and retrieve image
-				cvZero image
+				image: cvQueryFrame &capture ; grab and retrieve image
+				&image: as-pointer! image 
+				cvZero &image
 				toRebol
 		]
 		show [aled win]
@@ -60,7 +61,7 @@ camera: make object![
 		if isActive[
 	    	win/rate: none
 			aled/data: none 
-			cvZero image
+			cvZero &image
 			toRebol
 			win/text: "Camera ready"
 			show [aled win]
@@ -78,9 +79,10 @@ camera: make object![
 	
 	showVideo: does [
 		if isActive [
-		cvGrabFrame capture
-		image: cvRetrieveFrame capture; 
-		;cvQueryFrame capture ; grab and retrieve image
+		cvGrabFrame &capture
+		image: cvRetrieveFrame &capture; 
+		;cvQueryFrame &capture ; grab and retrieve image
+		&image: as-pointer! image 
 		win/text: now/time/precise
 		torebol
 		set-text mem join "Used memory " system/stats / (10 ** 6)

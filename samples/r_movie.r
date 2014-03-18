@@ -19,6 +19,7 @@ loadImage: does [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
 			capture: cvCreateFileCapture filename
+			&capture: as-pointer! capture
 			isFile: true
 			sl1/data: 0.0
 			m1/text: to-integer cvGetCaptureProperty capture CV_CAP_PROP_FRAME_WIDTH
@@ -49,7 +50,7 @@ getFrame: func [pos][
 			"previous" [ position: position - 1 if position <= 1 [position: 1] current: ratioVD * position]
 		]
 		cvSetCaptureProperty capture CV_CAP_PROP_POS_AVI_RATIO current ; le ratio
-		image: cvQueryFrame capture
+		image: cvQueryFrame &capture
 		cvtoRebol image rimage
 		show rimage
 		showPosition
@@ -61,14 +62,13 @@ getFrame: func [pos][
 
 
 showPosition: does [
-	;position: to-integer cvGetCaptureProperty capture CV_CAP_PROP_POS_FRAMES
+	;position: to-integer cvGetCaptureProperty &capture CV_CAP_PROP_POS_FRAMES
 	m5/text: position
 	ratio: round/to cvGetCaptureProperty capture CV_CAP_PROP_POS_AVI_RATIO 0.001
 	m6/text: to-string ratio
   	m7/text: join to-integer cvGetCaptureProperty capture CV_CAP_PROP_POS_MSEC " ms"
   	sl1/data: ratio
 	show [m5 m6  m7 sl1]
-
 ]
 
 

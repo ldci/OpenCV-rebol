@@ -8,7 +8,8 @@ This binding can be used with 1.0, 2.0 and higher version of the library.
 ## New version!!!
 Simplification in using rebol structures. 
 Routines devoted to memory (e.g. cvReleaseImage image)  are now defined as rebol functions.
-Routines directly call structures as pointer and calculate structure address if necessary.
+In order to be coherent with Red/System wrapping routines require (in most cases) pointer as parameter.
+Included as-pointer! function which returns structure address. this will be progressively extended to all routines. Be patient :)
 
 ## Warning
 You must use 32-bit version of dynamically linked libraries. 
@@ -26,8 +27,8 @@ These scripts allow to play with camera, images and matrices.
 cv_files.r are translations from c code to REBOL and some tests I wrote for debugging.
 r_files.r demonstrate how to integrate OpenCV functions inside REBOL code. 
 rg_files.r use wonderful Ashley Truter's  graphical libary for Rebol
-This dir also includes an images dir with some graphical files to play with.
-cascades dir includes some sample of classifiers required for some programs
+This dir also includes an images dir and a movies dir with some graphical files to play with.
+Cascades dir includes some sample of classifiers required for some programs
 
 ## enjoy
 

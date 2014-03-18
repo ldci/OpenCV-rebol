@@ -18,19 +18,20 @@ smax: to-string max_thresh
 isfile: false 
 
 activateCam: does [
-	capture: cvCreateCameraCapture CV_CAP_ANY  									; create a capture using default webcam
-	cvGrabFrame	capture
-	image: cvRetrieveFrame capture	
+	&capture: as-pointer! cvCreateCameraCapture CV_CAP_ANY  									; create a capture using default webcam
+	cvGrabFrame	&capture
+	image: cvRetrieveFrame &capture	
+	&image: as-pointer! image
 	imSize: length? third image
 	
 	;Create the color output image
 	cedge: cvCreateImage image/width image/height IPL_DEPTH_8U 3
-	&cedge: struct-address? cedge
+	&cedge: as-pointer! cedge
 	
 	;// Convert to grayscale
-    gray: cvCreateImage image/width image/height IPL_DEPTH_8U 1
+    &gray: as-pointer! cvCreateImage image/width image/height IPL_DEPTH_8U 1
     
-    edge: cvCreateImage image/width image/height IPL_DEPTH_8U 1
+    &edge: as-pointer! cvCreateImage image/width image/height IPL_DEPTH_8U 1
     
 	sl1/data: 0.0
 	show sl1
@@ -40,12 +41,12 @@ activateCam: does [
 
 
 filter: does [
-    cvCvtColor image gray CV_BGR2GRAY
-	cvSmooth gray edge CV_BLUR 3 3 0 0             		;filter
-    cvNot gray edge									;element bit-wise inversion of array elements
-    cvCanny gray edge edge_thresh edge_thresh * 3 3 	;Run the edge detector on grayscale
-    cvZero cedge										;color edges window to black
-    cvCopy image cedge edge							;copy edge points
+    cvCvtColor &image &gray CV_BGR2GRAY
+	cvSmooth &gray &edge CV_BLUR 3 3 0 0             		;filter
+    cvNot &gray &edge									;element bit-wise inversion of array elements
+    cvCanny &gray &edge edge_thresh edge_thresh * 3 3 	;Run the edge detector on grayscale
+    cvZero &cedge										;color edges window to black
+    cvCopy &image &cedge &edge							;copy edge points
     ; copy to rebol image
     either edge_thresh = 0 [cvtoRebol image rimage1] [cvtoRebol cedge rimage1]
     oct/text: to-string round/to edge_thresh 0.01
@@ -53,8 +54,9 @@ filter: does [
 ]
 
 showCam: does [
-	cvGrabFrame capture
-	image: cvRetrieveFrame capture    		  ; 24 bit webcam image
+	cvGrabFrame &capture
+	image: cvRetrieveFrame &capture    		  ; 24 bit webcam image
+	&image: as-pointer! image
 	filter
 	image: none
 
@@ -75,8 +77,8 @@ mainWin: [
 	button 38 "Activate cam" [activateCam]
 	button 38 "Start" [cam/data: true show cam rimage1/rate: 60 show rimage1] 
 	button 38 "Stop" [hideCam]
-	button 38 "Quit" [if isFile [cvReleaseImage image cvReleaseImage cedge
-					cvReleaseImage gray cvReleaseImage edge] 
+	button 38 "Quit" [if isFile [cvReleaseImage image cvReleaseImage &cedge
+					cvReleaseImage &gray cvReleaseImage &edge] 
 					quit]
 	at 1x8 field 20 "Threshold" options [info] sl1: slider 92x5 options [arrows][edge_thresh: sl1/data * max_thresh] 
 	oct: field 12 "0.0" options [info] font [align: 'center]

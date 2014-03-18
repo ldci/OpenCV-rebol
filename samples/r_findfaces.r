@@ -40,10 +40,11 @@ findFaces: does [
 	if isImage [
 		;cvZero isource 
 		isource: cvLoadImage file CV_LOAD_IMAGE_COLOR; CV_LOAD_IMAGE_UNCHANGED  
-		cvShowImage "Input" isource 
+		&isource: as-pointer! isource
+		cvShowImage "Input" &isource 
 		;Walid Probleme cvHaarDetectObjects : 
 		;Erreur de parametrage dans minNeighbors (par défaut = 3)
-		faces: cvHaarDetectObjects babyface cascade storage scaleFactor minNeighbors flags wsize wsize
+		faces: cvHaarDetectObjects &babyface cascade storage scaleFactor minNeighbors flags wsize wsize
 		for i 1 faces/total 1
 		[
 			faceRect: cvGetSeqElem faces i 0 ; we get a pointer to 4 integers
@@ -52,9 +53,9 @@ findFaces: does [
 			wd: to-integer reverse get-memory faceRect + 8 4
 	    	hg: to-integer reverse get-memory faceRect + 12 4	
 	    	roi: cvRect (x * scale) (y * scale) ((x + wd) * scale) ((y + hg) * scale)
-	    	cvRectangle isource roi/x roi/y roi/width roi/height  0 255 0 0 thickness lineType 0
+	    	cvRectangle &isource roi/x roi/y roi/width roi/height  0 255 0 0 thickness lineType 0
 		]
-		cvShowImage "Input" isource	
+		cvShowImage "Input" &isource	
 	]
 ]
 
@@ -74,9 +75,9 @@ selectClassifier: does [
 showImage: does [
 	cvNamedWindow "Input" CV_WINDOW_AUTOSIZE
     cvMoveWindow "Input" 100 200
-    cvSmooth isource isource CV_GAUSSIAN 3 3 0.0 0.0  ;gaussian smoothing
-    cvPyrDown isource babyface CV_GAUSSIAN_5x5 		  ;reduce original size to improve speed 
-    cvShowImage "Input" isource	
+    cvSmooth &isource &isource CV_GAUSSIAN 3 3 0.0 0.0  ;gaussian smoothing
+    cvPyrDown &isource &babyface CV_GAUSSIAN_5x5 		  ;reduce original size to improve speed 
+    cvShowImage "Input" &isource	
     {cvNamedWindow "Face" CV_WINDOW_AUTOSIZE
 	cvMoveWindow "Face" 900 300
 	cvShowImage "Face" babyface}
@@ -88,7 +89,8 @@ loadImage: does [
 	if not none? temp [
 	    file: to-string to-local-file to-string temp
 		isource: cvLoadImage file CV_LOAD_IMAGE_COLOR; CV_LOAD_IMAGE_UNCHANGED CV_LOAD_IMAGE_GRAYSCALE; 
-		babyface: cvCreateImage isource/width / 2  isource/height / 2 IPL_DEPTH_8U 3
+		&isource: as-pointer! isource
+		&babyface: as-pointer! cvCreateImage isource/width / 2  isource/height / 2 IPL_DEPTH_8U 3
 		storage: cvCreateMemStorage 0
 	    &storage: struct-address? storage
 	    faces: make struct! cvSeq! none
@@ -120,7 +122,8 @@ mainWin: layout/size [
 	btn 75 "Find Faces"  [findFaces] 
 	btn  70 "Quit" [ if isImage [
 					cvReleaseImage isource
-					cvReleaseImage babyface
+					cvReleaseImage &isource
+					cvReleaseImage &babyface
 					free-mem storage
 					free-mem cascade
 					free-mem faces]

@@ -2,7 +2,7 @@
 REBOL [
 	Title:		"OpenCV Tests: Hough Lines"
 	Author:		"François Jouen"
-	Rights:		"Copyright (c) 2012-2013 François Jouen. All rights reserved."
+	Rights:		"Copyright (c) 2012-2014 François Jouen. All rights reserved."
 	License:    "BSD-3 - https://github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
 ]
 
@@ -29,17 +29,17 @@ param2: 10.0
 
 
 HProba: does [
-   lines: cvHoughLines2 dst storage CV_HOUGH_PROBABILISTIC distance angle threshold param1 param2
+   lines: cvHoughLines2 &dst storage CV_HOUGH_PROBABILISTIC distance angle threshold param1 param2
    i: 0
     until [
-        line: cvGetSeqElem lines i ; line = pointeur address with 4 values ; increment 16 : 4 integers of sizeof 4
+        line: cvGetSeqElem lines i ; line = pointeur address with 4 values ; increment 16 : Ò®4 integers of sizeof 4
         ;data: get-memory &line 16 ; 
         pt1/x: to-integer reverse get-memory line + 0 4 ; OK  if not Using an Intel processor do not use reverse
         pt1/y: to-integer reverse get-memory line + 4 4  
         pt2/x: to-integer reverse get-memory line + 8 4
 		pt2/y: to-integer reverse get-memory line + 12 4
         ;print [line i " : " pt1/x " " pt1/y " " pt2/x " " pt2/y]
-        cvLine colorDst pt1/x pt1/y pt2/x pt2/y 0.0 0.0 255.0 0.0 3 CV_AA 0
+        cvLine &colorDst pt1/x pt1/y pt2/x pt2/y 0.0 0.0 255.0 0.0 3 CV_AA 0
         i: i + 1
         i = lines/total
     ]   
@@ -48,7 +48,7 @@ HProba: does [
 
 
 HNormal: func [] [
-    lines: cvHoughLines2 dst storage CV_HOUGH_STANDARD distance angle threshold 0.0 0.0
+    lines: cvHoughLines2 &dst storage CV_HOUGH_STANDARD distance angle threshold 0.0 0.0
     i: 0
     until [
         line: cvGetSeqElem lines i  ; line = pointeur address with 2 values ; increment  : 2 float of sizeof 4
@@ -70,7 +70,7 @@ HNormal: func [] [
         pt2/x: cvRound (x0 - (1000 * negate b))
         pt2/y: cvRound (y0 - (1000 * a)) 
         ;print [i " "x0 " "y0  " " a " "  negate b" " pt1/x  " " pt1/y " " pt2/x " "  pt2/y lf]
-        cvLine colorDst pt1/x pt1/y pt2/x pt2/y 255.0 0.0 0.0 0.0 3 CV_AA 0
+        cvLine &colorDst pt1/x pt1/y pt2/x pt2/y 255.0 0.0 0.0 0.0 3 CV_AA 0
         i: i + 1
         i =  MIN to-integer lines/total 100  
     ]
@@ -79,14 +79,15 @@ HNormal: func [] [
 
 
 loadImage: does [
-    
 	isFile: false
 	temp: request-file 
 	if not none? temp [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
-			src: cvLoadImage filename CV_LOAD_IMAGE_GRAYSCALE ; 
+			src: cvLoadImage filename CV_LOAD_IMAGE_GRAYSCALE ;
+			&src: as-pointer! src 
 			colorSrc: cvLoadImage filename  CV_LOAD_IMAGE_COLOR
+			&colorSrc: as-pointer! colorSrc
 			cvtoRebol  colorSrc rimage1 
 			rimage2/image: load ""
 			show rimage2
@@ -100,9 +101,11 @@ loadImage: does [
 processImage: does [
 	t1: now/time/precise
 	dst: cvCreateImage src/width src/height IPL_DEPTH_8U 1
-    colorDst: cvCreateImage src/width src/height IPL_DEPTH_8U 3
-    cvCanny src dst 50.0 200.0 3
-    cvCvtColor dst colorDst CV_GRAY2BGR
+	&dst: as-pointer! dst
+   	colorDst: cvCreateImage src/width src/height IPL_DEPTH_8U 3
+   	&colorDst: as-pointer! colorDst
+    cvCanny &src &dst 50.0 200.0 3
+    cvCvtColor &dst &colorDst CV_GRAY2BGR
     
     storage: cvCreateMemStorage 0
    

@@ -30,11 +30,12 @@ loadImage: does [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
 			;read src image
-			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR;  force 3 channels reading  
+			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR;  force 3 channels reading 
+			&src: as-pointer! src 
 			;Create the grayscale output images
-			Igray: cvCreateImage src/width src/height IPL_DEPTH_8U 1
-			cvCvtColor src Igray CV_BGR2GRAY
-			Iat: cvCreateImage Igray/width Igray/height IPL_DEPTH_8U 1
+			&igray: as-pointer! cvCreateImage src/width src/height IPL_DEPTH_8U 1
+			cvCvtColor &src &igray CV_BGR2GRAY
+			&iat: as-pointer! cvCreateImage src/width src/height IPL_DEPTH_8U 1
 			;make a rebol image
 			cvtoRebol  src rimage1
 			isFile: true
@@ -48,15 +49,17 @@ loadImage: does [
 
 
 showImages: does [
- 	cvAdaptiveThreshold Igray Iat 255 adaptive_method adaptive_threshold_type block_size _offset
- 	cvConvertImage iat src none
+ 	cvAdaptiveThreshold &Igray &Iat 255 adaptive_method adaptive_threshold_type block_size _offset
+ 	cvConvertImage &iat &src none
 	cvtoRebol src rimage2
 ]
 
 release: does [
-	cvReleaseImage Igray
-	cvReleaseImage Iat
 	cvReleaseImage src
+	cvReleaseImage &src
+	cvReleaseImage &Igray
+	cvReleaseImage &Iat
+	cvReleaseImage &src
 ]
 
 
@@ -94,9 +97,9 @@ mainwin: layout/size [
 	at 5x5 
 	btn 100 "Load Image" [loadImage if isFile [makeAdaptative]]
 	txt "Adaptative Method" 
-	aMethod: choice 230 data ["CV_ADAPTIVE_THRESH_MEAN_C" "CV_ADAPTIVE_THRESH_GAUSSIAN_C" ] [makeAdaptative]
+	aMethod: choice 230 black data ["CV_ADAPTIVE_THRESH_MEAN_C" "CV_ADAPTIVE_THRESH_GAUSSIAN_C" ] [makeAdaptative]
 	txt "Type"
-	tType: choice 180 data [ "CV_THRESH_BINARY" "CV_THRESH_BINARY_INV" ] [makeAdaptative]
+	tType: choice 180 black data [ "CV_THRESH_BINARY" "CV_THRESH_BINARY_INV" ] [makeAdaptative]
 	txt "Bloc Size (odd)"
 	aBlocSize: field 40 to-string block_size [makeAdaptative]
 	txt "+/- Constant" 

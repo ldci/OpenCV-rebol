@@ -36,8 +36,8 @@ The argument  pos informs the new position of the slider.}
 trackEvent: func [pos] [ 
 		;if odd? pos
 		if (pos and 1) = 1 [
-			cvSmooth src dst CV_MEDIAN pos 1 0.0 0.0 
-			cvShowImage dstWnd dst
+			cvSmooth &src &dst CV_MEDIAN pos 1 0.0 0.0 
+			cvShowImage dstWnd &dst
 		]
 ]
 
@@ -46,15 +46,17 @@ loadImage: does [
 	cvNamedWindow srcWnd CV_WINDOW_AUTOSIZE
 	cvNamedWindow dstWnd CV_WINDOW_AUTOSIZE
 	src: cvLoadImage picture CV_LOAD_IMAGE_UNCHANGED 
-	dst: cvCloneImage src
+	&src: as-pointer! src
+	&dst: as-pointer! cvCloneImage &src
+	
 	
 	cvMoveWindow srcWnd 25 100
 	cvMoveWindow dstWnd 540 120
 	
 	&pos: make struct! int-ptr! [0]
 	cvCreateTrackbar tBar srcWnd &pos 255 :trackEvent &pos
-	cvShowImage srcWnd src
-	cvShowImage dstWnd dst	
+	cvShowImage srcWnd &src
+	cvShowImage dstWnd &dst	
 	cvwaitKey 0
 ]
 
@@ -63,7 +65,8 @@ loadImage
 cvwaitKey 0
 free-mem &pos
 cvReleaseImage src
-cvReleaseImage dst
+cvReleaseImage &src
+cvReleaseImage &dst
 cvDestroyWindow srcWnd
 cvDestroyWindow dstWnd
 

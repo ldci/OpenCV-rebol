@@ -149,9 +149,19 @@ struct-address?: func [
 		string-address? third struct
 	]
 
+;some specific functions I added for pointers
 
+as-pointer!: func [struct [struct!]] [
+	struct-address? struct
+]
 
+as-int!: func [value [integer!]][
+	make struct! int-ptr! reduce [value]
+]
 
+as-float!: func [value [decimal!]] [
+	make struct! float-ptr reduce [value]
+]
 
 	
 ; specific for binary (char-array)
@@ -337,7 +347,7 @@ cvtoRebol: func [src dest] [
             unview/only fl
     ]  }
        
-    data:  reverse data
+    data: reverse data
     dest/image: make image! reduce [as-pair (src/width) (src/height) data]
     dest/effect: [fit flip 1x1]
 	show dest
@@ -460,13 +470,15 @@ tocvFloatRGB: func [color [tuple!] /local divider] [
 ;This function is really useful to get the values of an IplImage structure
 ; second src provokes a serious error if src/roi= 0  since roi is an imbricated structure
 
-getIPLValues: func [src ] [
-    blocValues: copy []
-	str: copy third src ; values changed by routines are here
+getIPLValues: func [src /address] [
+    bValues: copy []
+     ; values changed by routines are here 
+     ; int or struct 
+    either address [str: get-memory src 88] [str: copy third src]
 	while [not tail? str] [
-	p: to-integer reverse copy/part str 4
-	append blocValues p
-	str: skip str 4
+		p: to-integer reverse copy/part str 4
+		append bValues p
+		str: skip str 4
 	]
-	blocValues
+	bValues
 ]

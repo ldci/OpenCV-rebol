@@ -159,9 +159,10 @@ cvGetWindowName: make routine! [
 cvShowImage: make routine! compose/deep/only [
 "display image within window (highgui windows remember their content)"
 	name 		[string!]
-	image 		[struct! (first CvArr!)]
+	image 		[int]; [struct! (first CvArr!)]
 	return: 	[]
 ] highgui "cvShowImage"
+
 
 cvCreateTrackbar: make routine!  compose/deep/only [
 "create trackbar and display it on top of given window, set callback" 
@@ -212,6 +213,7 @@ Supported image formats: BMP, DIB, JPEG, JPG, JPE, PNG, PBM, SR, RAS, TIFF, TIF}
 ] highgui "cvLoadImage"
 
 
+
 cvLoadImageM: make routine! compose/deep/only [
 "this function returns a pointer CvMat structure  (see cxtypes.r)"
 	filename 		[string!]
@@ -223,7 +225,7 @@ cvLoadImageM: make routine! compose/deep/only [
 cvSaveImage: make routine! compose/deep/only  [
 "save image to file"
 	filename 		[string!]
-	image 			[struct! (first CvArr!)]
+	image 			[int]; [struct! (first CvArr!)]
 	return: 		[integer!]
 ] highgui "cvSaveImage"
 
@@ -231,8 +233,8 @@ cvSaveImage: make routine! compose/deep/only  [
 cvConvertImage: make routine! compose/deep/only [
 {utility function: convert one image to another with optional vertical flip
 src and dst are CvArr! i.e a pointer to image. flags:CV_DEFAULT(0)}
-	src 			[struct! (first CvArr!)]
-	dst 			[struct! (first CvArr!)]
+	src 			[int]; [struct! (first CvArr!)]
+	dst 			[int]; [struct! (first CvArr!)]
 	flags 			[integer!] ; CV_DEFAULT(0)
 	return:			[]
 ]highgui "cvConvertImage" 
@@ -264,7 +266,7 @@ Index of the camera to be used. If there is only one camera or it does not matte
 
 cvGrabFrame: make routine! compose/deep/only [
 "grab a frame, return 1 on success, 0 on fail. this function is thought to be fast" 
-	capture 		[struct! (first CvCapture!)] ;pointer to cvCapture
+	capture 		[int]; [struct! (first CvCapture!)] ;pointer to cvCapture
 	return: 		[integer!] ; returned value
 ] highgui "cvGrabFrame" 
 
@@ -272,21 +274,21 @@ cvGrabFrame: make routine! compose/deep/only [
 cvRetrieveFrame: make routine! compose/deep/only [
 {get the frame grabbed with cvGrabFrame(..) This function may apply some frame processing like 
 frame decompression, flipping etc. !!!DO NOT RELEASE or MODIFY the retrieved frame!!}
-	capture 		[struct! (first CvCapture!)] ;pointer to cvCapture ;pointer to cvCapture
+	capture 		[int]; [struct! (first CvCapture!)] ;pointer to cvCapture ;pointer to cvCapture
 	return: 		[struct! (first IplImage!)] ; returns an iplImage structure
 ] highgui "cvRetrieveFrame" 
    
   
 cvQueryFrame: make routine! compose/deep/only [
 "Just a combination of cvGrabFrame and cvRetrieveFrame !!!DO NOT RELEASE or MODIFY the retrieved frame!!! "
-	capture 		[struct! (first CvCapture!)] ;pointer to cvCapture 
+	capture 		[int]; ;pointer to cvCapture 
 	return: 		[struct! (first IplImage!)] ; returns an iplImage structure
 ] highgui "cvQueryFrame" 
    
 ; orginal OPenCV
 cvReleaseCapture_: make routine! compose/deep/only [
 "stop capturing/reading and free resources"
-	capture 		[struct! (first CvCapture!)] ; requires double pointer to cvCapture
+	capture 		[int]; requires double pointer to cvCapture
 	return:			[]
 ]highgui "cvReleaseCapture"
 
@@ -297,14 +299,14 @@ cvReleaseCapture: func [capture] [
 
 
 cvGetCaptureProperty: make routine! compose/deep/only[
-"retrieve capture properties"
+"retrieve capture properties. Struct required!"
 	capture 		[struct! (first CvCapture!)] ;pointer to cvCapture
 	property_id 	[integer!]
 	return: 		[decimal!]
 ]highgui "cvGetCaptureProperty"
 
 cvSetCaptureProperty: make routine! compose/deep/only[
-"set capture properties"
+"set capture properties. Struct required!"
 	capture 		[struct! (first CvCapture!)] ;pointer to cvCapture
 	property_id 	[integer!]
 	value 			[decimal!]

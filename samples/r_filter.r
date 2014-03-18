@@ -1,8 +1,8 @@
 #! /usr/bin/rebol
 REBOL [
 	Title:		"OpenCV Tests"
-	Author:		"FranÁois Jouen"
-	Rights:		"Copyright (c) 2012-2013 François Jouen. All rights reserved."
+	Author:		"François Jouen"
+	Rights:		"Copyright (c) 2012-2014 François Jouen. All rights reserved."
 	License:    "BSD-3 - https://github.com/dockimbel/Red/blob/master/BSD-3-License.txt"
 ]
 ;some improvements by Walid Yahia 2014 
@@ -24,7 +24,12 @@ loadImage: does [
 	 	filename: to-string to-local-file to-string temp
 		if error? try [
 			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR ;CV_LOAD_IMAGE_UNCHANGED 
-			dst: cvCloneImage src
+			&src: as-pointer! src
+			dst: cvCloneImage &src
+			
+			&dst: as-pointer! dst
+			
+			
 			cvtoRebol src rimage1 
 			cvtoRebol dst rimage2
 			isFile: true
@@ -52,16 +57,16 @@ trackEvent: does [
    ;Si on choisit CV_BILATERAL alors on utilise cvSmooth avec parametres pos = sigma1 et sigma2
    ;Sinon si c'est CV_MEDIAN, CV_GAUSSIAN ... on utilise les param par dÈfauts.
 		either (filter = CV_BILATERAL) 
-					[cvSmooth src dst CV_BILATERAL 10 10 pos pos]
-					[cvSmooth src dst filter pos 0 0 0]		
+					[cvSmooth &src &dst CV_BILATERAL 10 10 pos pos]
+					[cvSmooth &src &dst filter pos 0 0 0]		
 		]	
 	cvtoRebol dst rimage2	
 	oct/text: pos
 	show oct
 ]
 release: does [
-	cvReleaseImage src
-	cvReleaseImage dst
+	cvReleaseImage &src
+	cvReleaseImage &dst
 ]
 
 
@@ -77,7 +82,6 @@ mainwin: layout/size [
 	
 	
 	oct: info 40 "0" 
-	txt "Fits Image" 
 	at 935x5 btn 100 "Quit" [if isFile [release] quit]
 	space 0x0
     at 5x30 rimage1: image 512x512 frame blue
