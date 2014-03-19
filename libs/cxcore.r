@@ -93,28 +93,28 @@ cvReleaseImage: func [image] [
 
 cvCloneImage: make routine! compose/deep/only[
 "Creates a copy of IPL image (widthStep may differ) "
-	image		[int] ; IplImage!
+	image		[int] 						; IplImage!
 	return: 	[struct! (first IplImage!)] ; returns an iplImage structure
 ] cxcore "cvCloneImage"
 
 cvSetImageCOI: make routine! [
 {Sets a Channel Of Interest (only a few functions support COI)
 use cvCopy to extract the selected channel and/or put it back}
-	image		[int] ; IplImage!
+	image		[int] 		; IplImage!
     coi			[integer!]
 ] cxcore "cvSetImageCOI"
 
 
 cvGetImageCOI: make routine!  [
 "Retrieves image Channel Of Interest"
-	image		[int] ; IplImage!
+	image		[int] 		; IplImage!
 	return:		[integer!]
 ] cxcore "cvGetImageCOI"
 
 
 cvSetImageROI: make routine!  [
 "Sets image ROI (region of interest) (COI is not changed)"
-	image		[int] ; IplImage!	
+	image		[int] 		; IplImage!	
 	rect_x		[integer!]  ; CvRect/x 
     rect_y		[integer!]	; CvRect/y
     rect_w		[integer!]  ; CvRect/width 
@@ -137,7 +137,7 @@ cvGetImageROI_: make routine! [
 ; inline rebol version OK
 
 cvGetImageROI: func [image] [
-	; get values associated to IplImage	
+	; get values associated to IplImage	pointer
 	blocValues: getIPLValues/address image
     ptr: blocValues/13 ; ROI value
     ;Roi exists
@@ -177,13 +177,13 @@ CV_AUTOSTEP:  to-integer #7fffffff
 
 cvInitMatHeader: make routine! compose/deep/only [ 
 "Initializes CvMat header"
-	mat		[int] 		; CvMat!
-	rows	[integer!]
-	cols	[integer!]
-	type	[integer!]
-	data    [int] 		; [struct! (first int-ptr!)] ; void* pointer
-	step	[integer!] 	; CV_DEFAULT(CV_AUTOSTEP)
-	return:	[struct! (first CvMat!)]
+	mat			[int] 		; CvMat!
+	rows		[integer!]
+	cols		[integer!]
+	type		[integer!]
+	data    	[int] 		;  ; void* pointer
+	step		[integer!] 	; CV_DEFAULT(CV_AUTOSTEP)
+	return:		[struct! (first CvMat!)]
 ] cxcore "cvInitMatHeader"
   
 cvCreateMat: make routine! compose/deep/only [
@@ -191,7 +191,7 @@ cvCreateMat: make routine! compose/deep/only [
  	rows		[integer!]
  	cols		[integer!]
  	type 		[integer!]
- 	return:	[struct! (first CvMat!)]
+ 	return:		[struct! (first CvMat!)]
 ]cxcore "cvCreateMat" 
 
 ;OpenCV
@@ -242,8 +242,8 @@ cvIncRefData: func  [mat]
 
 cvCloneMat: make routine! compose/deep/only [
 "Creates an exact copy of the input matrix (except, may be, step value)"
-	mat		[int] ; CvMat!
-	return:	[struct! (first CvMat!)]
+	mat			[int] 		; CvMat!
+	return:		[struct! (first CvMat!)]
 ] cxcore "cvCloneMat"
 
 cvGetSubRect: make routine! compose/deep/only [
@@ -299,7 +299,7 @@ cvGetDiag: make routine! compose/deep/only [
 
 cvScalarToRawData: make routine! compose/deep/only [
 "low-level scalar <-> raw data conversion functions"
-	scalar			[struct! (first CvScalar!)]	
+	scalar			[struct! (first CvScalar!)]	; pointer 
 	data			[int];  *void pointer
 	type			[integer!]
 	extend_to_12	[integer!];CV_DEFAULT(0)
@@ -308,14 +308,14 @@ cvScalarToRawData: make routine! compose/deep/only [
 cvRawDataToScalar: make routine! compose/deep/only [
 	data			[int]; *void pointer
 	type			[integer!]
-	scalar			[struct! (first CvScalar!)]
+	scalar			[struct! (first CvScalar!)] ;pointer
 	return:			[]
 ] cxcore "cvRawDataToScalar"
 
 ;Allocates and initializes CvMatND header
 cvCreateMatNDHeader: make routine! compose/deep/only [
 	dims			[integer!]
-	sizes			[int] ; pointer to an array of values 
+	sizes			[int] 		; pointer to an array of values 
 	type			[integer!]
 	return:			[struct! (first CvMatND!)]
 ] cxcore"cvCreateMatNDHeader"
@@ -323,14 +323,14 @@ cvCreateMatNDHeader: make routine! compose/deep/only [
 cvCreateMatND: make routine! compose/deep/only [
 "Allocates and initializes CvMatND header and allocates data"
 	dims		[integer!]
-	sizes		[int] ; pointer to an array of values 
+	sizes		[int] 			; pointer to an array of values 
 	type		[integer!]
 	return:		[struct! (first CvMatND!)]
 ]cxcore "cvCreateMatND"
 
 cvInitMatNDHeader: make routine! compose/deep/only [
 "Initializes preallocated CvMatND header"
-	mat			[struct! (first CvMatND!)]
+	mat			[int]    ;;CvMatND!
 	dims		[integer!]
 	sizes		[int] ; int pointer
 	type		[integer!]
@@ -345,7 +345,7 @@ cvReleaseMatND: func [mat] [free-mem mat]
 
 cvCloneMatND: make routine! compose/deep/only [
 "Creates a copy of CvMatND (except, may be, steps)"
-	mat		[int]	;CvMatND!)
+	mat		[int]	;CvMatND!
 	return:	[struct! (first CvMatND!)]
 ] cxcore "cvCloneMatND"
 
@@ -368,16 +368,19 @@ cvReleaseSparseMat: func [mat][free-mem mat]
 
 cvCloneSparseMat: make routine! compose/deep/only [
 "Creates a copy of CvSparseMat (except, may be, zero items)"
-	mat 		[struct! (first CvSparseMat!)]
+	mat 		[int]	;  CvSparseMat!
 	return: 	[struct! (first CvSparseMat!)]
 ]cxcore "cvCloneSparseMat"
 
+;opencv
 cvInitSparseMatIterator_: make routine! compose/deep/only [
 "Initializes sparse array iterator (returns the first node or NULL if the array is empty)"
 	mat 			[struct! (first CvSparseMat!)]
 	mat_iterator	[struct! (first CvSparseMatIterator!)]
 	return: 		[struct! (first CvSparseNode!)]
 ]cxcore "cvInitSparseMatIterator"
+
+; rebol : use struct!
 
 cvInitSparseMatIterator: func [mat iterator] [
 	node: make struct! CvSparseNode! none
@@ -399,7 +402,6 @@ cvInitSparseMatIterator: func [mat iterator] [
 	node
 
 ]
-
 
 
 
@@ -459,7 +461,7 @@ cvInitNArrayIterator: make routine! compose/deep/only [
 
 cvNextNArraySlice: make routine! compose/deep/only [
 "returns zero value if iteration is finished, non-zero (slice length) otherwise "
-	array_iterator	[struct! (first CvNArrayIterator!)]
+	array_iterator	[int]		;struct! (first CvNArrayIterator!)
 	return:			[integer!] 
 ] cxcore "cvNextNArraySlice"
  
@@ -472,7 +474,7 @@ cvGetElemType: make routine! compose/deep/only [
 cvGetDims: make routine! compose/deep/only [
 "retrieves number of an array dimensions and optionally sizes of the dimensions"
 	arr			[int]       ;CvArr!
-	sizes		[int]; CV_DEFAULT(NULL)
+	sizes		[int]		; CV_DEFAULT(NULL)
 	return:		[integer!]
 ] cxcore "cvGetDims"
 
@@ -481,24 +483,24 @@ cvGetDimSize: make routine! compose/deep/only [
 ;For 2d arrays cvGetDimSize(arr,0) returns number of rows (image height) 
 and cvGetDimSize(arr,1) returns number of columns (image width)}
 	arr			[int]       ;CvArr!
-	index		[integer!]; CV_DEFAULT(NULL)
+	index		[integer!]	;CV_DEFAULT(NULL)
 	return:		[integer!]
 ] cxcore "cvGetDimSize"
 
 ;ptr = &arr(idx0,idx1,...). All indexes are zero-based, the major dimensions go first (e.g. (y,x) for 2D, (z,y,x) for 3D
 cvPtr1D: make routine! compose/deep/only [
 	arr			[int]       ;CvArr!
-	idx0		[integer!]; 
-	type		[int] ; CV_DEFAULT(NULL)
-	return:		[int] ; or uchar*
+	idx0		[integer!]	; 
+	type		[int] 		; CV_DEFAULT(NULL)
+	return:		[int] 		; or uchar*
 ] cxcore "cvPtr1D"
 
 cvPtr2D: make routine! compose/deep/only [
 	arr			[int]       ;CvArr!
-	idx0		[integer!]; 
-	idx1		[integer!];
-	type		[int] ; CV_DEFAULT(NULL)
-	return:		[int] ; or uchar*
+	idx0		[integer!]	 
+	idx1		[integer!]
+	type		[int] 		; CV_DEFAULT(NULL)
+	return:		[int] 		; or uchar*
 ] cxcore "cvPtr2D"
 
 cvPtr3D: make routine! compose/deep/only [
@@ -506,7 +508,7 @@ cvPtr3D: make routine! compose/deep/only [
 	idx0		[integer!]; 
 	idx1		[integer!];
 	idx2		[integer!];
-	type		[int] ; CV_DEFAULT(NULL)
+	type		[int] 		; CV_DEFAULT(NULL)
 	return:		[int] ; or uchar*
 ] cxcore "cvPtr3D"
 
@@ -518,10 +520,10 @@ cvPtr3D: make routine! compose/deep/only [
 cvPtrND: make routine! compose/deep/only [
 	arr					[int]       ;CvArr!
 	idx					[int]; 
-	type				[int];CV_DEFAULT(NULL)
-	create_node			[integer!];CV_DEFAULT(1)
-	precalc_hashval		[int]; CV_DEFAULT(NULL)
-	return:				[int] ; or uchar*
+	type				[int]		;CV_DEFAULT(NULL)
+	create_node			[integer!]	;CV_DEFAULT(1)
+	precalc_hashval		[int]		; CV_DEFAULT(NULL)
+	return:				[int] 		; or uchar*
 ] cxcore "cvPtrND"
 
 ;value = arr(idx0,idx1,...)
@@ -651,8 +653,8 @@ cvSetRealND: make routine! compose/deep/only [
 
 cvClearND: make routine! compose/deep/only [
 "clears element of ND dense array, in case of sparse arrays it deletes the specified node"
-	arr			[struct![(first int-ptr!)]]
-	idx 		[integer!]
+	arr			[int]
+	idx 		[int]
 ] cxcore "cvClearND"
 
 {Converts CvArr (IplImage or CvMat,...) to CvMat.
@@ -663,10 +665,10 @@ matrix will be have appropriate (a huge) number of rows}
 
 cvGetMat: make routine! compose/deep/only [
 "Converts CvArr (IplImage or CvMat,...) to CvMat"
-	arr			[int]       ;CvArr!
-	header		[int] ; CvMat!
-	coi			[struct! (first int-ptr!)];CV_DEFAULT(NULL)
-	allowND		[integer!];CV_DEFAULT(0)
+	arr			[int]       				;CvArr!
+	header		[int] 						; CvMat!
+	coi			[int]						;CV_DEFAULT(NULL)
+	allowND		[integer!]					;CV_DEFAULT(0)
 	return: 	[struct! (first CvMat!)]
 ]cxcore "cvGetMat"
 
@@ -674,7 +676,7 @@ cvGetMat: make routine! compose/deep/only [
 cvGetImage: make routine! compose/deep/only [
 "Converts CvArr (IplImage or CvMat) to IplImage"
 	arr				[int]       ;CvArr!
-    image_header 	[int] ; IplImage!
+    image_header 	[int] 		; IplImage!
 	return: 		[struct! (first IplImage!)]	
 ] cxcore "cvGetImage"
 
@@ -696,7 +698,7 @@ cvReshapeMatND: make routine! compose/deep/only [
 	header			[int]       ;CvArr!
 	new_cn			[integer!]
 	new_dims		[integer!]
-	new_sizes		[struct![(first int-ptr!)]]
+	new_sizes		[int]
 	return: 		[struct! (first CvArr!)]
 ]cxcore "cvReshapeMatND"
 
@@ -707,7 +709,7 @@ cvReshape: make routine! compose/deep/only [
 	arr				[int]       ;CvArr!
 	header			[int]       ;CvArr!
 	new_cn			[integer!]
-	new_rows		[integer!];CV_DEFAULT(0)
+	new_rows		[integer!]	;CV_DEFAULT(0)
 	return: 		[struct! (first CvMat!)]
 ] cxcore "cvReshape"
 
@@ -739,7 +741,7 @@ cvSetData: make routine! compose/deep/only [
 the pre-last dimension. That is, all the planes of the array
 must be joint (w/o gaps)}
 	arr				[int]       ;CvArr!
-	data			[int];void* pointer 
+	data			[int]		;void* pointer 
 	step			[integer!]
 ] cxcore "cvSetData"
 
@@ -749,7 +751,7 @@ the array can not be represented as a matrix}
 
 cvGetRawData: make routine! compose/deep/only [
 "retrieves raw data of CvMat, IplImage or CvMatND"
-	arr				[struct! (first CvArr!)]      ;CvArr!
+	arr				[int]      ;CvArr!
 	data			[int] ;uchar** pointer
 	step			[int]; CV_DEFAULT(NULL)
 	roi_size		[struct! (first CvSize!)];CV_DEFAULT(NULL)
@@ -774,11 +776,10 @@ cvGetSize: func [arr /image /mat /matND /sparse] [
 
 cvCopy: make routine! compose/deep/only [
 "copies source array to destination array"
-	src				[int]; [struct! (first CvArr!)]
-	dst				[int];[struct! (first CvArr!)]
+	src				[int] 	;CvArr!
+	dst				[int] 	;CvArr!
 	mask			[int]; CV_DEFAULT(NULL) or none in REBOL
 ] cxcore "cvCopy"
-
 
 
 
@@ -830,11 +831,11 @@ or inserts one particular [color] plane to the array}
 
 cvMixChannels: make routine! compose/deep/only [
 "copies several channels from input arrays to certain channels of output arrays"
-	src			[int]; [struct! (first CvArr!)]
+	src			[int]			;CvArr!
 	src_count	[integer!]
-	dst			[int]; [struct! (first CvArr!)]
+	dst			[int]			;CvArr!
 	dst_count	[integer!]
-	from_to		[int]; [struct! (first int-ptr!)]
+	from_to		[int]			;CvArr!
 	pair_count 	[integer!]	
 ]cxcore "cvMixChannels"
 

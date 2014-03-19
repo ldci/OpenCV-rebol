@@ -155,8 +155,9 @@ as-pointer!: func [struct [struct!]] [
 	struct-address? struct
 ]
 
-as-int!: func [value [integer!]][
-	make struct! int-ptr! reduce [value]
+as-int!: func [value [integer!] /&][
+	p: make struct! int-ptr! reduce [value]
+	either & [return struct-address? p] [p]
 ]
 
 as-float!: func [value [decimal!]] [

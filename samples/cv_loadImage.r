@@ -58,10 +58,10 @@ data: make struct! int-ptr! reduce [img/imageSize]
 &data: as-pointer! data 
 roi: make struct! cvSize! reduce [img/width img/height]
 
-cvGetRawData img &data &step roi
+cvGetRawData &img &data &step roi
 &data: data/int          					; get the pointer adress in return
 data: get-memory  &data img/imageSize		;get the data
-cvSetData copie &data img/widthStep			;now use SetData to make a copy of image !
+cvSetData &copie &data img/widthStep			;now use SetData to make a copy of image !
 ;set-memory copie/imageData data			; this can also be done but slower (rebol)
 free-mem data								; free memory
 
@@ -69,6 +69,7 @@ free-mem data								; free memory
 cvNamedWindow "copie" CV_WINDOW_AUTOSIZE
 cvShowImage "copie" &copie
 
+print ["" newline]
 print "Use cvGetRawData to make a new image"
 
 
@@ -79,7 +80,7 @@ cvCopy &img &copie2 none
 
 cvNamedWindow "copie2" CV_WINDOW_AUTOSIZE
 cvShowImage "copie2" &copie2
-
+print ["" newline]
 print "Use cvCopy to make a new image"
 
 cvWaitKey 1000
@@ -91,7 +92,7 @@ cvSet &copie2 255 255 255 255 0
 cvShowImage "copie2" &copie2
 cvWaitKey 1000
 ; tout en noir OK
-cvSetZero copie2
+cvSetZero &copie2
 cvShowImage "copie2" &copie2
 print "Copy image is black"
 
