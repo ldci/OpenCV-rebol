@@ -51,9 +51,8 @@ cvShowImage windowsName &img ; show image
 copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
 &copie: as-pointer! copie
 cvZero &copie
-; to get data from orginal image wit rawdata	
-step: make struct! int-ptr! reduce [img/widthStep]
-&step: as-pointer! step
+; to get data from orginal image with rawdata	
+&step: as-int!/& img/widthStep
 data: make struct! int-ptr! reduce [img/imageSize]
 &data: as-pointer! data 
 roi: make struct! cvSize! reduce [img/width img/height]

@@ -155,13 +155,14 @@ as-pointer!: func [struct [struct!]] [
 	struct-address? struct
 ]
 
-as-int!: func [value [integer!] /&][
+as-int!: func [value [integer!] /& /local p][
 	p: make struct! int-ptr! reduce [value]
 	either & [return struct-address? p] [p]
 ]
 
-as-float!: func [value [decimal!]] [
-	make struct! float-ptr reduce [value]
+as-float!: func [value [decimal!] /& /local p] [
+	p: make struct! float-ptr! reduce [value]
+	either & [return struct-address? p] [p]
 ]
 
 	
@@ -327,12 +328,13 @@ cvSavetoRebol: func [src dest] [
 
 cvtoRebol: func [src dest] [
     ;  get data from image with cvRawdata	
-	step: make struct! int-ptr! reduce [src/widthStep]
-	&step: struct-address? step
+	
+	&step: as-int!/& src/widthStep
 	data: make struct! int-ptr! reduce [src/imageSize]
 	&data: struct-address? data 
 	roi: make struct! cvSize! reduce [0 0]
-	cvGetRawData src &data &step roi
+	&src: as-pointer! src
+	cvGetRawData &src &data &step roi
 	&data: data/int          					; get the pointer adress in return
 	data: get-memory  &data src/imageSize		;get the data
 	

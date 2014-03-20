@@ -809,10 +809,10 @@ cvZero: make routine! compose/deep/only [
 cvSplit: make routine! compose/deep/only [
 "splits a multi-channel array into the set of single-channel arrays or extracts particular [color] plane"
 	src				[int] ;source 
-	dst0			[int] ;b
-	dst1			[int] ;g	
-	dst2			[int] ;r
-	dst3			[int] ; a
+	dst0			[int] 
+	dst1			[int] 	
+	dst2			[int] 
+	dst3			[int] 
 ] cxcore "cvSplit"
 
 
@@ -820,11 +820,11 @@ cvSplit: make routine! compose/deep/only [
 cvMerge: make routine! compose/deep/only [
 {merges a set of single-channel arrays into the single multi-channel array 
 or inserts one particular [color] plane to the array}
-	src0			[int]; b
-	src1			[int];g
-	src2			[int];r
-	src3			[int]; a
-	dst				[int]; destination image
+	src0			[int] 
+	src1			[int]  
+	src2			[int] 
+	src3			[int] 
+	dst				[int] ; destination array
 ] cxcore "cvMerge"
 
 
@@ -905,14 +905,14 @@ cvCheckTermCriteria: make routine! compose/deep/only [
 
 cvAdd: make routine! compose/deep/only [
 	src1			[int] ; CvArr!;CvArr!
-	src2			[int] ; CvArr!; CvArr!
-	dst				[int] ; CvArr!; CvArr!
+	src2			[int] ; CvArr! 
+	dst				[int] ; CvArr! 
 	mask			[int] ;CvArr!;CV_DEFAULT(NULL) 0
 ]cxcore "cvAdd"
 
 ;dst(mask) = src(mask) + value
 cvAddS: make routine! compose/deep/only [
-	src				[int] 		; CvArr! ;CvArr!
+	src				[int] 		; CvArr! 
 	v0              [decimal!]  ;cvScalar 4 values  
     v1              [decimal!]
     v2              [decimal!]
@@ -925,9 +925,9 @@ cvAddS: make routine! compose/deep/only [
 
 ;dst(mask) = src1(mask) - src2(mask) */
 cvSub: make routine! compose/deep/only [
-	src1			[int] ; CvArr! ;CvArr!
-	src2			[int] ; CvArr! ;CvArr!
-	dst				[int] ; CvArr! ;CvArr!
+	src1			[int] ; CvArr! 
+	src2			[int] ; CvArr! 
+	dst				[int] ; CvArr! 
 	mask			[int] ;CvArr!;CV_DEFAULT(NULL)
 ]cxcore "cvSub"
 
@@ -960,9 +960,9 @@ cvSubRS: make routine! compose/deep/only [
 
 ;dst(idx) = src1(idx) * src2(idx) * scale (scaled element-wise multiplication of 2 arrays)
 cvMul: make routine! compose/deep/only [
-	src1				[int] ; CvArr! ;CvArr!
-	src2				[int] ; CvArr! ;CvArr!
-	dst 				[int] ; CvArr! ;CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
+	dst 				[int] ; CvArr! 
 	scale				[decimal!] ;CV_DEFAULT(1))
 ] cxcore "cvMul"
 
@@ -971,9 +971,9 @@ dst(idx) = src1(idx) * scale / src2(idx)
 or dst(idx) = scale / src2(idx) if src1 == 0}
     
 cvDiv: make routine! compose/deep/only [
-	src1				[int];[struct! (first CvArr!)] ;CvArr!
-	src2				[int]; [struct! (first CvArr!)] ;CvArr!
-	dst 				[int] ;[struct! (first CvArr!)] ;CvArr!
+	src1				[int] ;CvArr!
+	src2				[int] ; CvArr!
+	dst 				[int] ; CvArr!
 	scale				[decimal!] ;CV_DEFAULT(1))
 ] cxcore "cvDiv"
 
@@ -1006,16 +1006,16 @@ cvAddWeighted: make routine! compose/deep/only [
 
 ;result = sum_i(src1(i) * src2(i)) (results for all channels are accumulated together)
 cvDotProduct: make routine! compose/deep/only [
-	src1				[int] ; CvArr! ;CvArr!
-	src2				[int] ; CvArr! ;CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
 	return:				[decimal!]
 ] cxcore "cvDotProduct"
 
 ;dst(idx) = src1(idx) & src2(idx)
 cvAnd: make routine! compose/deep/only [
-	src1				[int] ; CvArr! ;CvArr!
-	src2				[int] ; CvArr! ;CvArr!
-	dst 				[int] ; CvArr! ;CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
+	dst 				[int] ; CvArr! 
 	mask				[int] ;CvArr! CV_DEFAULT(NULL)
 ] cxcore "cvAnd" 
 
@@ -1036,9 +1036,9 @@ cvAndS: make routine! compose/deep/only [
 
 ;dst(idx) = src1(idx) | src2(idx)
 cvOr: make routine! compose/deep/only [
-	src1				[int] ; CvArr! ;CvArr!
-	src2				[int] ; CvArr! ;CvArr!
-	dst 				[int] ; CvArr! ;CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
+	dst 				[int] ; CvArr! 
 	mask				[int] ;CvArr! ;CV_DEFAULT(NULL)
 ] cxcore "cvOr" 
 
@@ -1058,9 +1058,9 @@ cvOrS: make routine! compose/deep/only [
 
 ;dst(idx) = src1(idx) ^ src2(idx)
 cvXor: make routine! compose/deep/only [
-	src1				[int] ; CvArr! ;CvArr!
-	src2				[int] ; CvArr! ;CvArr!
-	dst 				[int] ; CvArr! ;CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
+	dst 				[int] ; CvArr! 
 	mask				[int] ;CvArr!;CV_DEFAULT(NULL)
 ] cxcore "cvXor" 
 
@@ -1078,13 +1078,13 @@ cvXorS: make routine! compose/deep/only [
 
 ;/* dst(idx) = ~src(idx)
 cvNot: make routine! compose/deep/only [
-	src					[int] ; CvArr! ;CvArr!
-	dst					[int] ; CvArr! ;CvArr!
+	src					[int] ; CvArr! 
+	dst					[int] ; CvArr! 
 ] cxcore "cvNot"
 
 ;dst(idx) = lower(idx) <= src(idx) < upper(idx) */
 cvInRange: make routine! compose/deep/only [
-	src					[int] ; CvArr! ;CvArr!
+	src					[int] ; CvArr! 
 	lower               [int] ; CvArr!
     upper               [int] ; CvArr!
 	dst					[int] ; CvArr!
@@ -1120,63 +1120,63 @@ cvInRangeS: make routine! compose/deep/only [
  ;dst(idx) = src1(idx) _cmp_op_ src2(idx) */
  cvCmp: make routine! compose/deep/only [
  "The comparison operation support single-channel arrays only. Destination image should be 8uC1 or 8sC1"
-	src1				[int] ; CvArr! ;CvArr!
-	src2				[int] ; CvArr! ;CvArr!
-	dst					[int] ; CvArr! ;CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
+	dst					[int] ; CvArr! 
 	cmp_op				[integer!]
  ] cxcore "cvCmp"
  
 
  cvCmpS: make routine! compose/deep/only [
  "dst(idx) = src1(idx) _cmp_op_ value"
-	src					[int] ; CvArr!; CvArr!
+	src					[int] ; CvArr!
 	value				[decimal!]
-	dst					[int] ; CvArr!; CvArr!
+	dst					[int] ; CvArr!
 	cmp_op				[integer!]
  ] cxcore "cvCmpS"
 
 
 cvMin: make routine! compose/deep/only [
 "dst(idx) = min(src1(idx),src2(idx)"
-	src1				[int] ; CvArr!; CvArr!
-	src2				[int] ; CvArr!; CvArr!
-	dst					[int] ; CvArr!; CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
+	dst					[int] ; CvArr! 
  ] cxcore "cvMin"
 
 
 cvMax: make routine! compose/deep/only [
 ";dst(idx) = max(src1(idx),src2(idx))"
-	src1				[int] ; CvArr!; CvArr!
-	src2				[int] ; CvArr!; CvArr!
-	dst					[int] ; CvArr!; CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
+	dst					[int] ; CvArr! 
  ] cxcore "cvMax"
 
 
  cvMinS: make routine! compose/deep/only [
  "dst(idx) = min(src(idx),value)"
-	src					[int] ; CvArr!; CvArr!
+	src					[int] ; CvArr! 
 	value				[decimal!]
-	dst					[int] ; CvArr!; CvArr!
+	dst					[int] ; CvArr! 
  ] cxcore "cvMinS"
 
 cvMaxS: make routine! compose/deep/only [
 "dst(idx) = max(src(idx),value)"
-	src					[int] ; CvArr!; CvArr!
+	src					[int] ; CvArr! 
 	value				[decimal!]
-	dst					[int] ; CvArr!; CvArr!
+	dst					[int] ; CvArr! 
  ] cxcore "cvMaxS"
  
  cvAbsDiff: make routine! compose/deep/only [
  " dst(x,y,c) = abs(src1(x,y,c) - src2(x,y,c))"
-	src1				[int] ; CvArr!; CvArr!
-	src2				[int] ; CvArr!; CvArr!
-	dst					[int] ; CvArr!; CvArr!
+	src1				[int] ; CvArr! 
+	src2				[int] ; CvArr! 
+	dst					[int] ; CvArr! 
  ] cxcore "cvAbsDiff"
  
  cvAbsDiffS: make routine! compose/deep/only [
  "dst(x,y,c) = abs(src(x,y,c) - value(c))"
-	src				    [int] ; CvArr!; CvArr!
-	dst					[int] ; CvArr!; CvArr!
+	src				    [int] ; CvArr! 
+	dst					[int] ; CvArr! 
 	v0              	[decimal!] ;CvScalar!
     v1              	[decimal!]
     v2              	[decimal!]
@@ -1303,7 +1303,7 @@ CV_SORT_ASCENDING:		 0
 CV_SORT_DESCENDING:		 16
 
 ; only for single channel array for src and dst;
-cvSort_: make make routine! compose/deep/only [
+cvSort: make make routine! compose/deep/only [
 	src				[int] ; CvArr!
 	dst				[int] ; CV_DEFAULT(NULL)
 	idxmat			[int] ; CV_DEFAULT(NULL)
@@ -1311,27 +1311,20 @@ cvSort_: make make routine! compose/deep/only [
 	
 ] cxcore "cvSort"
 
-;rebol
+; a specific rebol sort: can be used with multi channel images
 
-cvSort: func [src dst idxmat flags /local d i ] [
-	either dst != none [d: struct-address? dst] [d: none]
-	either idxmat != none [i: struct-address? idxmat] [i: none]
-	probe flags
-	cvSort_ src d i flags
-]
-
-; a specific rebol sort: same result for images 
 cvRSort: func [src dst /local step data roi] [
-	step: make struct! int-ptr! reduce [src/widthStep]
-	&step: struct-address? step
+	&step: as-int!/& src/widthStep
 	data: make struct! int-ptr! reduce [src/imageSize]
 	&data: struct-address? data 
 	roi: make struct! cvSize! reduce [0 0]
-	cvGetRawData src &data &step roi
+	&src: as-pointer! src
+	cvGetRawData &src &data &step roi
 	&data: data/int          					; get the pointer adress in return
 	data: get-memory  &data src/imageSize		; get the data
-	sort data								    ; sort data
-	cvSetData dst &data src/widthStep			;now use SetData to destination image !
+	sort data									; sort data
+	&dst: as-pointer! dst						    
+	cvSetData &dst &data src/widthStep			;now use SetData to destination image !
 	free-mem data
 ]
 
@@ -1664,8 +1657,8 @@ cvAvgSdv: func [arr mean std_dev mask /local m] [
 cvMinMaxLoc: make routine! compose/deep/only [
 "Finds global minimum, maximum and their positions"
 	arr			[int]       ;CvArr!
-	min_val		[struct! [(first float-ptr!)]] ;[decimal!]
-	max_val		[struct! [(first float-ptr!)]] ;[decimal!]
+	min_val		[struct! (first float-ptr!)] ;[decimal!]
+	max_val		[struct! (first float-ptr!)] ;[decimal!]
 	min_loc		[struct! (first CvPoint!)];CV_DEFAULT(NULL)
 	max_loc		[struct! (first CvPoint!)];CV_DEFAULT(NULL)
 	mask	 	[int] ;[struct! (first CvArr!)];CV_DEFAULT(NULL)
@@ -1691,7 +1684,7 @@ cvMinMaxLoc: make routine! compose/deep/only [
  "Finds norm, difference norm or relative difference norm for an array (or two arrays)"
 	arr1			[int] ; CvArr!
 	arr2			[int] ; CvArr!;CV_DEFAULT(NULL)
-	norm_type 		[integer!]; CV_DEFAULT(CV_L2
+	norm_type 		[integer!]; CV_DEFAULT(CV_L2)
 	mask	 		[int] ; CvArr!;CV_DEFAULT(NULL)
 	return:			[decimal!]
  ]cxcore "cvNorm"

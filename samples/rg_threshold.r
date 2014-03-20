@@ -110,8 +110,6 @@ mainWin: [
 		return
 		mem: field 260 options [info]
 	]
-	
-	
 ]
 
 

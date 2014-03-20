@@ -42,7 +42,7 @@ loadImage: does [
 			;cvNamedWindow "src" CV_WINDOW_AUTOSIZE 
 			;cvShowImage "src" src 
 		]
-		[Alert "Not an image" ]
+		[Alert "Problem in reading image" ]
 	]
 ]
 

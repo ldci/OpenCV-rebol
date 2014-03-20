@@ -99,13 +99,14 @@ loadImage: does [
 			set-text p2text to-string param2
 			processImage
 		]
-		[Alert "Not an image" ]
+		[Alert "Problem in reading image" ]
 	]
 ]
 
 
 processImage: does [
 	t1: now/time/precise
+	&src: as-pointer! src
 	dst: cvCreateImage src/width src/height IPL_DEPTH_8U 1
 	&dst: as-pointer! dst
    	colorDst: cvCreateImage src/width src/height IPL_DEPTH_8U 3

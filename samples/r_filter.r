@@ -26,17 +26,14 @@ loadImage: does [
 			src: cvLoadImage filename CV_LOAD_IMAGE_COLOR ;CV_LOAD_IMAGE_UNCHANGED 
 			&src: as-pointer! src
 			dst: cvCloneImage &src
-			
 			&dst: as-pointer! dst
-			
-			
 			cvtoRebol src rimage1 
 			cvtoRebol dst rimage2
 			isFile: true
 			sl1/data: 0
 			show [sl1]
 		]
-		[Alert "Not an image" ]
+		[Alert "Problem in reading image" ]
 	]
 ]
 
