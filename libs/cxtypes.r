@@ -173,7 +173,7 @@ IplROI!: make struct! [
 ] none
 
 
-IplImage!: make struct! compose/deep/only[
+IplImage!: make struct! compose/deep/only [
     nSize 				[integer!]							; sizeof(IplImage)
     ID 					[integer!]							; version (=0)
     nChannels 			[integer!]							; Most of OpenCV functions support 1,2,3 or 4 channels
@@ -936,7 +936,7 @@ cvMemStoragePos: make struct!  [
 ] none
 
 ;/*********************************** Sequence *******************************************/
-CvSeqBlock!: make struct!  [
+CvSeqBlock!: make struct! compose/deep/only [
     prev 			[int]				; previous sequence block :  CvSeqBlock*
     next 			[int]				; next sequence block :  CvSeqBlock*
     start_index 	[integer!]			; index of the first element in the block + sequence->first->start_index */
@@ -947,22 +947,24 @@ CvSeqBlock!: make struct!  [
 ;we combine CV_TREE_NODE_FIELDS  CV_SEQUENCE_FIELDS
 
 
-CvSeq!: make struct!  [
+CvSeq!: make struct![
 	flags           		[integer!]      ;micsellaneous flags
 	header_size     		[integer!]      ;size of sequence header
-    h_prev                 	[int]    		;struct previous sequence  CvSeq! 
-    h_next                	[int]    		;struct next sequence CvSeq!
-    v_prev                 	[int]    		;struct 2nd previous sequence CvSeq!
-    v_next                 	[int]     		;struct 2nd next sequence CvSeq!
+    h_prev                 	[int]    		;pointer to CvSeq! struct:  previous sequence  
+    h_next                	[int]     		;pointer to CvSeq! struct: next sequence 
+    v_prev                 	[int]    		;pointer to  CvSeq! struct: 2nd previous sequence 
+    v_next                 	[int]      		;pointer to CvSeq! struct 2nd next sequence 
     total                   [integer!]      ;total number of elements
     elem_size               [integer!]      ;size of sequence element in bytes 
-    block_max              	[int]    		; maximal bound of the last block
+    block_max              	[int]    	    ; maximal bound of the last block char*
     ptr                    	[int]    		;current write pointer
     delta_elems             [integer!]      ;how many elements allocated when the seq grows
     storage                 [int]   		;CvMemStorage! where the seq is stored
     free_blocks             [int]     		;CvSeqBlock! free blocks list 
     first                   [int]     		;CvSeqBlock! pointer to the first sequence block 
 ] none
+
+
 
 
 
@@ -989,7 +991,7 @@ CvSetElem!: make struct! [
 
 
 ;we combine CV_SET_FIELDS! and CV_SEQUENCE_FIELDS()   in a  struct
-CvSet!: make struct!  [
+CvSet!: make struct! [
 	flags           		[integer!]      ;micsellaneous flags
 	header_size     		[integer!]      ;size of sequence header
     h_prev                 	[int]    		;struct previous sequence  CvSeq! 
@@ -1006,7 +1008,6 @@ CvSet!: make struct!  [
     first                   [int]     		;CvSeqBlock! pointer to the first sequence block
 	free_elems				[int]			;CvSetElem!  
     active_count 			[integer!]	 
-	 
 ]none
 
 
@@ -1014,7 +1015,13 @@ CV_SET_ELEM_IDX_MASK:   ((1 shift/left 26 1) - 1)
 CV_SET_ELEM_FREE_FLAG:   (1 shift/left 31 1)
 
 ;/* Checks whether the CvSetElem! element pointed by ptr belongs to a set or not */
-CV_IS_SET_ELEM: func [ ptr ] [ptr/flags >= 0]
+CV_IS_SET_ELEM: func [ ptr ] [
+either ptr != 0 [
+	flags: to-integer reverse get-memory ptr + 0 4
+	next_free: to-integer reverse get-memory ptr + 4 4
+	flags >= 0] 
+	[false]
+]
 
 ;/************************************* Graph ********************************************/
 
@@ -1034,19 +1041,6 @@ CV_IS_SET_ELEM: func [ ptr ] [ptr/flags >= 0]
     next[1] points to the next edge in the vtx[1] adjacency list.
 }
 
-CV_GRAPH_EDGE_FIELDS!: make struct!  [      
-    flags			[integer!];        
-    weight			[integer!];    
-    next			[int] ; pointer struct CvGraphEdge*  
-    vtx				[int] ; pointer struct CvGraphVtx* 
-]none
-
-CV_GRAPH_VERTEX_FIELDS!: make struct!  [    
-    flags				[integer!];                
-    first 				[int] ; pointer struct CvGraphEdge* ;
-]none
-
-
 CvGraphEdge!: make struct! [
     flags			[integer!];        
     weight			[integer!];    
@@ -1062,19 +1056,30 @@ CvGraphVtx!: make struct! [
 CvGraphVtx2D!: make struct! compose/deep/only [
     flags				[integer!];                
     first 				[int] ; pointer struct CvGraphEdge* ;
-    ptr 				[struct! (first CvPoint2D32f!)] ; CvPoint2D32f!
+    ptr 				[int] ; CvPoint2D32f!
 ] none
 
 ;Graph is "derived" from the set (this is set a of vertices) and includes another set (edges)
 
-CV_GRAPH_FIELDS!: make struct! compose/deep/only  [
-    r 		[struct! (first CvSeq!)] ;CV_SET_FIELDS!
-    edges 	[struct! (first CvSet!)]; pointer CvSet! 
-] none
-
 
 CvGraph!: make struct!  [
-    ptr [int] ;CV_GRAPH_FIELDS!
+    flags           		[integer!]      ;micsellaneous flags
+	header_size     		[integer!]      ;size of sequence header
+    h_prev                 	[int]    		;struct previous sequence  CvSeq! 
+    h_next                	[int]    		;struct next sequence CvSeq!
+    v_prev                 	[int]    		;struct 2nd previous sequence CvSeq!
+    v_next                 	[int]     		;struct 2nd next sequence CvSeq!
+    total                   [integer!]      ;total number of elements
+    elem_size               [integer!]      ;size of sequence element in bytes 
+    block_max              	[int]    		; maximal bound of the last block
+    ptr                    	[int]    		;current write pointer
+    delta_elems             [integer!]      ;how many elements allocated when the seq grows
+    storage                 [int]   		;CvMemStorage! where the seq is stored
+    free_blocks             [int]     		;CvSeqBlock! free blocks list 
+    first                   [int]     		;CvSeqBlock! pointer to the first sequence block
+	free_elems				[int]			;CvSetElem!  
+    active_count 			[integer!]	 
+    edges					[int]			; pointer to CvSet
 ] none
 
 CV_TYPE_NAME_GRAPH:			 "opencv-graph"
@@ -1212,8 +1217,8 @@ CV_SEQ_WRITER_FIELDS!: make struct!  [
     block_max	[int]		; pointer to the end of block
 ] none
 
-CvSeqWriter!: make struct!  [ 
-   ptr [int] ;CV_SEQ_WRITER_FIELDS!
+CvSeqWriter!: make struct! compose/deep/only  [ 
+   	ptr 		[struct! (first CV_SEQ_WRITER_FIELDS!)] ;CV_SEQ_WRITER_FIELDS!
 ] none
 
 
@@ -1228,8 +1233,8 @@ CV_SEQ_READER_FIELDS!: make struct!  [
     prev_elem   [int]		;pointer to previous element
 ] none
 
-CvSeqReader!: make struct!  [ 
-   ptr [int] ;CV_SEQ_READER_FIELDS!
+CvSeqReader!: make struct!  compose/deep/only [ 
+   ptr 			[struct! (first CV_SEQ_READER_FIELDS!)] ;CV_SEQ_READER_FIELDS!
 ] none
 
 ;/****************************************************************************************/

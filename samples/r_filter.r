@@ -49,8 +49,10 @@ setFilter:  does [
 ]
 
 trackEvent: does [  
-   pos: round (sl1/data * max_iters)
-   if odd? pos [
+	&src: as-pointer! src
+   	&dst: as-pointer! dst
+   	pos: round (sl1/data * max_iters)
+   	if odd? pos [
    ;Si on choisit CV_BILATERAL alors on utilise cvSmooth avec parametres pos = sigma1 et sigma2
    ;Sinon si c'est CV_MEDIAN, CV_GAUSSIAN ... on utilise les param par défauts.
 		either (filter = CV_BILATERAL) 

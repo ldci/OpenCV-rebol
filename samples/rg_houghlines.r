@@ -114,7 +114,6 @@ processImage: does [
     cvCanny &src &dst 50.0 200.0 3
     cvCvtColor &dst &colorDst CV_GRAY2BGR
     storage: cvCreateMemStorage 0
-   
     switch flag/text [
 		"STANDARD" [HNormal]
 		"PROBABILISTIC" [HProba]
@@ -145,7 +144,8 @@ mainWin: [
 	                        p2text: field 10 [if error? try [param2: to-decimal p2text/text] [param2: 10.0]]
 	button 15 "Process" [if isFile [processImage]]
 	button 10 "Quit" [if isFile [cvReleaseImage src cvReleaseImage dst 
-	                          cvReleaseImage colorSrc cvReleaseImage colorDst] 
+	                          cvReleaseImage colorSrc cvReleaseImage colorDst
+	                          cvReleaseMemStorage storage] 
 	                          quit]
 	return
 	panel data [

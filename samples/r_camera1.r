@@ -28,9 +28,9 @@ showCamera: has [frame] [
 	cvLaplace &frame &laplace neighbourhoodSize ; 32 bit image
 	cvConvertImage &laplace  &frame 0    		  ; 32 -> 24 bit image
 	cvtoRebol  frame rimage2					; transform to REBOL
-	frame: none
 	mem/text: round/to stats / (10 ** 6) 0.01
 	show mem 
+	;free-mem frame
 ]
 
 hideCamera: does [
@@ -38,7 +38,7 @@ hideCamera: does [
 	rimage1/image/rgb: 0
 	rimage2/image/rgb: 0
 	show [rimage1 rimage2]
-	recycle
+	
 ]
 
 

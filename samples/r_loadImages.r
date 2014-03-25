@@ -125,8 +125,12 @@ cvImage: make object![
     ]
     
     cvtoRebol: func [dest] [
-       t1: now/time/precise
-        data: get-memory img/imageData img/imageSize  
+        t1: now/time/precise
+        
+        size: img/width * img/height * img/nChannels
+        either size = img/imageSize [data: get-memory img/imageData img/imageSize]  
+        		[data: get-memory img/imageData size ]
+        
        
         cimg: make image! as-pair  (img/width) (img/height) 
         ; cv grayscale image must be converted to rgb rebol image

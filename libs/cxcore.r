@@ -886,7 +886,7 @@ cvCvtScaleAbs: func [src dst scale shift] [
 ;max_iter to default_max_iters (if it is not set)
 cvCheckTermCriteria: make routine! compose/deep/only [
 "checks termination criteria validity and sets eps to default_eps (if it is not set)"
-	criteria			[struct! (first CvTermCriteria!)]
+	criteria			[int];[struct! (first CvTermCriteria!)]
 	default_eps			[decimal!]
 	default_max_iters 	[integer!]
 	return: 			[struct! (first CvTermCriteria!)]
@@ -1379,7 +1379,7 @@ CV_GEMM_A_T: 1
 CV_GEMM_B_T: 2
 CV_GEMM_C_T: 4
 
-cvTransform_: make routine! compose/deep/only [
+cvTransform: make routine! compose/deep/only [
 "transforms each element of source array and stores resultant vectors in destination array"
 	src			[int] ; CvArr!
 	dst			[int] ; CvArr!
@@ -1387,11 +1387,6 @@ cvTransform_: make routine! compose/deep/only [
 	shiftvec	[int]
 ] cxcore "cvTransform"
 
-
-cvTransform: func [src dst transmat shiftvec /local v] [
-	either shiftvec != none [v: struct-address? shiftvec] [v: none]
-	cvTransform_ src dst transmat v
-]
 
 alias 'cvTransform "cvMatMulAddS"
 
@@ -1402,7 +1397,7 @@ cvPerspectiveTransform: make routine! compose/deep/only [
 	mat			[int] ; CvMat!
 ] cxcore "cvPerspectiveTransform"
 
-cvMulTransposed_: make routine! compose/deep/only [
+cvMulTransposed: make routine! compose/deep/only [
 "Calculates (A-delta)*(A-delta)^T (order=0) or (A-delta)^T*(A-delta) (order=1)"
 	src			[int] ; CvArr!
 	dst			[int] ; CvArr!
@@ -1411,10 +1406,6 @@ cvMulTransposed_: make routine! compose/deep/only [
 	scale		[decimal!];CV_DEFAULT(1.)
 ] cxcore "cvMulTransposed"
 
-cvMulTransposed: func [src dst order delta scale /local d] [
-	either delta != none [d: struct-address? delta ] [d: none]
-	cvMulTransposed_ src dst order d scale
-]
 
 cvTranspose: make routine! compose/deep/only [
 "Tranposes matrix. Square matrices can be transposed in-place"
@@ -1442,16 +1433,6 @@ cvFlip(src) flips images vertically and sequences horizontally (inplace)}
 ] cxcore "cvFlip"
 
 
-cvFlip_: make routine! compose/deep/only [
-{Mirror array data around horizontal (flip=0),
-vertical (flip=1) or both(flip=-1) axises:
-cvFlip(src) flips images vertically and sequences horizontally (inplace)}
-	src			[int]
-	dst			[int] ;CV_DEFAULT(src)
-	flip_mode	[integer!]
-] cxcore "cvFlip"
-
-
 
 alias 'cvFlip "cvMirror"
 
@@ -1459,7 +1440,7 @@ CV_SVD_MODIFY_A:   1
 CV_SVD_U_T:        2
 CV_SVD_V_T:        4
 
-cvSVD_: make routine! compose/deep/only [
+cvSVD: make routine! compose/deep/only [
 "Performs Singular Value Decomposition of a matrix"
 	A			[int] ; CvArr!
 	W			[int] ; CvArr!
@@ -1467,12 +1448,6 @@ cvSVD_: make routine! compose/deep/only [
 	V			[int] ;DEFAULT(NULL)
 	flags		[integer!]
 ] cxcore "cvSVD"
-
-cvSVD: func [A W U V flags /Local uu vv] [
-	either U != none [uu: struct-address? U] [uu: none]
-	either V != none [vv: struct-address? V] [vv: none]
-	cvSVD_ A W uu vv flags
-]
 
 
 cvSVBkSb: make routine! compose/deep/only [
@@ -1640,7 +1615,7 @@ cvAvg: make routine! compose/deep/only [
 
 
 
-cvAvgSdv_: make routine! compose/deep/only [
+cvAvgSdv: make routine! compose/deep/only [
 "Calculates mean and standard deviation of pixel values"
 	arr		[int] ; CvArr!
 	mean	[struct! (first CvScalar!)]
@@ -1649,10 +1624,6 @@ cvAvgSdv_: make routine! compose/deep/only [
 	return:	[]
 ] cxcore "cvAvgSdv"
 
-cvAvgSdv: func [arr mean std_dev mask /local m] [
-	either mask != none [m: struct-address? mask] [m: none]
-	cvAvgSdv_ arr mean std_dev m
-]
 
 cvMinMaxLoc: make routine! compose/deep/only [
 "Finds global minimum, maximum and their positions"
@@ -1766,7 +1737,7 @@ cvSliceLength: make routine! compose/deep/only [
 "Calculates length of sequence slice (with support of negative indices)"
 	slice_start_index       [integer!] ;CvSlice 
     slice_end_index         [integer!]
-	seq						[struct! (first CvSeq!)]
+	seq						[struct! (first CvSeq!)] ; struct as pointer
 	return:					[integer!]
 ] cxcore "cvSliceLength"
 ;PAUSE
@@ -1778,36 +1749,40 @@ cvCreateMemStorage: make routine! compose/deep/only [
 
 ;Creates a memory storage that will borrow memory blocks from parent storage
 cvCreateChildMemStorage: make routine! compose/deep/only [
-	parent	 		[struct! (first CvMemStorage!)]
-	return:			[struct! (first CvMemStorage!)]
+	parent	 		[struct! (first CvMemStorage!)] ; struct as pointer
+	return:			[struct! (first CvMemStorage!)] ; struct as pointer
 ] cxcore "cvCreateChildMemStorage"
 
 ;Releases memory storage. All the children of a parent must be released before the parent. 
 ;A child storage returns all the blocks to parent when it is released
 
 ;OPENVCV
-cvReleaseMemStorage: make routine! compose/deep/only [
+cvReleaseMemStorage_: make routine! compose/deep/only [
 	storage	 		[struct! (first CvMemStorage!)] ;CvMemStorage** (address?)
 ] cxcore "cvReleaseMemStorage"
+; rebol 
+cvReleaseMemStorage: func [storage][
+	free-mem storage
+]
 
 {Clears memory storage. This is the only way(!!!) (besides cvRestoreMemStoragePos)
 to reuse memory allocated for the storage - cvClearSeq,cvClearSet ...
 do not free any memory.A child storage returns all the blocks to the parent when it is cleared}
 
 cvClearMemStorage: make routine! compose/deep/only [
-	storage	 		[struct! (first CvMemStorage!)] ;CvMemStorage** (address?)
+	storage	 		[struct! (first CvMemStorage!)] ;struct as pointer
 ] cxcore "cvClearMemStorage"
 
 ;Remember a storage "free memory" position 
 cvSaveMemStoragePos: make routine! compose/deep/only [
-	storage	 		[struct! (first CvMemStorage!)] 
-	pos		 		[struct! (first CvMemStorage!)] 
+	storage	 		[struct! (first CvMemStorage!)]  ; struct as pointer
+	pos		 		[struct! (first CvMemStorage!)]  ; struct as pointer
 ] cxcore "cvSaveMemStoragePos"
 
 ;Restore a storage "free memory" position
 cvRestoreMemStoragePos: make routine! compose/deep/only [
-	storage	 		[struct! (first CvMemStorage!)] 
-	pos		 		[struct! (first CvMemStorage!)] 
+	storage	 		[struct! (first CvMemStorage!)]  ; struct as pointer
+	pos		 		[struct! (first CvMemStorage!)]  ; struct as pointer
 ] cxcore "cvRestoreMemStoragePos"
 
 ;Allocates continuous buffer of the specified size in the storage */
@@ -1819,10 +1794,11 @@ cvMemStorageAlloc: make routine! compose/deep/only [
 ;Allocates string in memory storage */
 cvMemStorageAlloc: make routine! compose/deep/only [
 	storage	 		[struct! (first CvMemStorage!)] 
-	ptr		 	    [struct! (first int-ptr!)] ; pointer
+	ptr		 	    [int] ; pointer string
 	len				[integer!];CV_DEFAULT(-1)
 	return:			[string!]
 ] cxcore "cvMemStorageAlloc"
+
 
 ;Creates new empty sequence that will reside in the specified storage 
 cvCreateSeq: make routine! compose/deep/only [
@@ -1833,6 +1809,7 @@ cvCreateSeq: make routine! compose/deep/only [
 	return: 		[struct! (first CvSeq!)]
 ] cxcore "cvCreateSeq"
 
+
 ;changes default size (granularity) of sequence blocks. The default size is ~1Kbyte
 cvSetSeqBlockSize: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
@@ -1842,27 +1819,27 @@ cvSetSeqBlockSize: make routine! compose/deep/only [
 ;Adds new element to the end of sequence. Returns pointer to the element
 cvSeqPush: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
-	element 		[integer!];CV_DEFAULT(NULL) pointer
+	element 		[int];CV_DEFAULT(NULL) pointer
 	return: 		[int]
 ] cxcore "cvSeqPush"
 
 ;Adds new element to the beginning of sequence. Returns pointer to it
 cvSeqPushFront: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
-	element 		[integer!];CV_DEFAULT(NULL) pointer
+	element 		[int];CV_DEFAULT(NULL) pointer
 	return: 		[int]
 ] cxcore "cvSeqPushFront"
 
 ;Removes the last element from sequence and optionally saves it
 cvSeqPop: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
-	element 		[integer!];CV_DEFAULT(NULL) pointer
+	element 		[int];CV_DEFAULT(NULL) pointer
 ] cxcore "cvSeqPop"
 
 ;Removes the first element from sequence and optioanally saves it
 cvSeqPopFront: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
-	element 		[integer!];CV_DEFAULT(NULL) pointer
+	element 		[int];CV_DEFAULT(NULL) pointer
 ] cxcore "cvSeqPopFront"
 
 CV_FRONT: 1
@@ -1871,7 +1848,7 @@ CV_BACK: 0
 ;Adds several new elements to the end of sequence
 cvSeqPushMulti: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
-	element 		[integer!];CV_DEFAULT(NULL) pointer
+	element 		[int];CV_DEFAULT(NULL) pointer *
 	count			[integer!]
 	in_front		[integer!]; CV_DEFAULT(0)
 ] cxcore "cvSeqPushMulti"
@@ -1879,7 +1856,7 @@ cvSeqPushMulti: make routine! compose/deep/only [
 ;Removes several elements from the end of sequence and optionally saves them
 cvSeqPopMulti: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
-	element 		[integer!];CV_DEFAULT(NULL) pointer
+	element 		[int];CV_DEFAULT(NULL) pointer
 	count			[integer!]
 	in_front		[integer!]; CV_DEFAULT(0)
 ] cxcore "cvSeqPopMulti"
@@ -1888,8 +1865,8 @@ cvSeqPopMulti: make routine! compose/deep/only [
 cvSeqInsert: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
 	before_index	[integer!]
-	element 		[integer!];CV_DEFAULT(NULL) pointer
-	return: 		[int]
+	element 		[int];CV_DEFAULT(NULL) pointer
+	return: 		[int] ; pointer schar*
 ] cxcore "cvSeqInsert"
 
 ;Removes specified sequence element
@@ -1917,8 +1894,9 @@ cvGetSeqElem: make routine! compose/deep/only [
 ;Calculates index of the specified sequence element. Returns -1 if element does not belong to the sequence 
 cvSeqElemIdx: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
-	element			[integer!] ; pointer to void*
-	return:			[struct! (first CvSeqBlock!)]; CV_DEFAULT(NULL) address?
+	element			[int] ; pointer to void*
+	block			[int]      ;CV_DEFAULT(NULL) ;struct! (first CvSeqBlock!)
+	return:			[integer!]; 
 ] cxcore "cvSeqElemIdx"
 
 ;Initializes sequence writer. The new elements will be added to the end of sequence
@@ -1935,6 +1913,7 @@ cvStartWriteSeq: make routine! compose/deep/only [
     storage			[struct! (first CvMemStorage!)]
     writer			[struct! (first CvSeqWriter!)]
 ] cxcore "cvStartWriteSeq"
+
 
 {Closes sequence writer, updates sequence header and returns pointer to the resultant sequence
 (which may be useful if the sequence was created using cvStartWriteSeq))}
@@ -1971,35 +1950,38 @@ cvSetSeqReaderPos: make routine! compose/deep/only [
 ;Copies sequence content to a continuous piece of memory 
 cvCvtSeqToArray: make routine! compose/deep/only [
 	seq				[struct! (first CvSeq!)]
-	elements		[integer!]; pointer
+	elements		[int]; pointer
 	slice		 	[struct! (first CvSlice!)];CV_DEFAULT(CV_WHOLE_SEQ)
+	return:			[int]; void*
 ] cxcore "cvCvtSeqToArray"
 
 ;Creates sequence header for array.
-;After that all the operations on sequences that do not alter the conten can be applied to the resultant sequence
+;After that all the operations on sequences that do not alter the content can be applied to the resultant sequence
 cvMakeSeqHeaderForArray: make routine! compose/deep/only [
 	seq_type			[struct! (first CvSeq!)]
 	header_size		 	[integer!]
 	elem_size		 	[integer!]
-	elements			[integer!]; pointer
+	elements			[int]	; pointer void*
 	total				[integer!]
 	seq					[struct! (first CvSeq!)]
 	block				[struct! (first CvSeqBlock!)]
-	return:			[struct! (first CvSeq!)]
+	return:				[struct! (first CvSeq!)]
 ] cxcore "cvMakeSeqHeaderForArray"
 
 ;Extracts sequence slice (with or without copying sequence elements)
 cvSeqSlice: make routine! compose/deep/only [
 	seq					[struct! (first CvSeq!)]
-	slice 				[struct! (first CvSlice!)]
+	start_index 		[integer!] ; cvslice
+	end_index 			[integer!] ; cvslice	
 	storage				[struct! (first CvMemStorage!)];CV_DEFAULT(NULL)
 	copy_data			[integer!];CV_DEFAULT(NULL)
+	return:				[struct! (first CvSeq!)]
 ] cxcore "cvSeqSlice"
 
 ;inline function
-cvCloneSeq: func [seq storage 1]
+cvCloneSeq: func [seq storage]
 [
-    return cvSeqSlice seq CV_WHOLE_SEQ storage 1
+    return cvSeqSlice seq 0 CV_WHOLE_SEQ_END_INDEX storage 1
 ]
 
 ;Removes sequence slice
@@ -2028,17 +2010,17 @@ CV_CDECL*: :CvCmpFunc
 cvSeqSort: make routine! compose/deep/only [
 	seq					[struct! (first CvSeq!)]
 	CvCmpFunc			[integer!]
-	userdata			[integer!];CV_DEFAULT(NULL)
+	userdata			[int];CV_DEFAULT(NULL)
 ] cxcore "cvSeqSort"
 
 ;Finds element in a [sorted] sequence 
 cvSeqSearch: make routine! compose/deep/only [
 	seq					[struct! (first CvSeq!)]
-	elem				[integer!]
+	elem				[int]
 	CvCmpFunc			[integer!]
 	is_sorted			[integer!]
-	elem_idx			[struct! (first int-ptr!)]
-	userdata			[integer!];CV_DEFAULT(NULL)
+	elem_idx			[int]
+	userdata			[int];CV_DEFAULT(NULL)
 	return:				[int]
 ] cxcore "cvSeqSearch"
 
@@ -2051,15 +2033,15 @@ cvSeqInvert: make routine! compose/deep/only [
 cvSeqPartition: make routine! compose/deep/only [
 	seq					[struct! (first CvSeq!)]
 	storage				[struct! (first CvMemStorage!)]
-	labels				[struct! (first CvSeq!)]; CvSeq** 
+	labels				[int]; CvSeq** 
 	is_equal			[integer!]
-	userdata			[integer!]
+	userdata			[int]
 	return:				[integer!]
 ] cxcore "cvSeqPartition"
 
 ;/************ Internal sequence functions ************/
 cvChangeSeqBlock: make routine![
-	reader				[integer!]
+	reader				[int] ; void*
 	direction			[integer!]
 ] cxcore "cvChangeSeqBlock"
 
@@ -2076,11 +2058,12 @@ cvCreateSet: make routine! compose/deep/only [
 	return:				[struct! (first CvSet!)]
 ] cxcore "cvCreateSet"
 
+
 ;Adds new element to the set and returns pointer to it
 cvSetAdd: make routine! compose/deep/only [
 	set_header			[struct! (first CvSet!)]
-	elem			    [struct! (first CvSetElem!)]; V_DEFAULT(NULL)
-	inserted_elem 		[struct! (first CvSetElem!)] ;CvSetElem** V_DEFAULT(NULL)
+	elem			    [int]; struct! (first CvSetElem!)CV_DEFAULT(NULL)
+	inserted_elem 		[int] ;CvSetElem** V_DEFAULT(NULL)
 	return:				[integer!]
 ] cxcore "cvSetAdd"
 
@@ -2118,11 +2101,13 @@ cvSetRemove: make routine! compose/deep/only [
 ] cxcore "cvSetRemove"
 
 ;inline func Returns a set element by index. If the element doesn't belong to the set,NULL is returned
-cvGetSetElem: func [set_header index ]
+cvGetSetElem: func [set_header index  /local tmp tmp2]
 [
+	tmp: tmp2: 0
     elem: cvGetSeqElem set_header index
-    tmp: elem AND CV_IS_SET_ELEM elem
-    either tmp <> 0 [return tmp] [return 0];
+    either CV_IS_SET_ELEM elem [tmp: 1] [tmp: 0]
+    to-logic elem AND tmp
+   
 ]
 
 ;Removes all the elements from the set
@@ -2143,8 +2128,8 @@ cvCreateGraph: make routine! compose/deep/only [
 ;Adds new vertex to the graph
 cvGraphAddVtx: make routine! compose/deep/only [
 	graph			[struct! (first CvGraph!)]
-	vtx				[struct! (first CvGraphVtx!)];CV_DEFAULT(NULL)
-	inserted_vtx	[struct! (first CvGraphVtx!)]; pointer address? CV_DEFAULT(NULL)
+	vtx				[int] ;CvGraphVtx CV_DEFAULT(NULL)
+	inserted_vtx	[int]; CvGraphVtx pointer address? CV_DEFAULT(NULL)
     return:			[integer!]
 ] cxcore "cvGraphAddVtx"
 

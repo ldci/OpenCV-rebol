@@ -27,7 +27,6 @@ ON_SEGMENT: does [
     	cvPyrSegmentation &image0 &image1 storage &comp level threshold1 + 1 threshold2 + 1
     	cvtoRebol image1 rimage2
     ]
-    recycle
 ]
 
 
@@ -42,7 +41,7 @@ loadImage: does [
 			&image: as-pointer! image
 			;show rebol image
 			cvtoRebol image rimage1 
-			
+	
 			imSize/text: join image/width [ " " image/height] 
 			show imSize
 			

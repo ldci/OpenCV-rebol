@@ -21,6 +21,8 @@ isFile: false
 ;Open/close morphology operators
 
 openClose: does [
+	&src: as-pointer! src
+    &dst: as-pointer! dst
     n: (round sl1/data * max_iters * 2) - max_iters
     either n > 0 [an: n] [an: negate n]
     element: cvCreateStructuringElementEx (an * 2) + 1 (an * 2) + 1 an an element_shape 0 
@@ -36,6 +38,8 @@ openClose: does [
 ;Erode/dilate morphology operators
 
 erodeDilate: does [
+	 &src: as-pointer! src
+    &dst: as-pointer! dst
 	 n: (round sl2/data * max_iters * 2) - max_iters
      either n > 0 [an: n] [an: negate n]
      element: cvCreateStructuringElementEx (an * 2) + 1 (an * 2) + 1 an an element_shape 0 

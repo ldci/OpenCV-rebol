@@ -177,7 +177,7 @@ mainwin: layout/size [
 	
 	at 460x5 btn 50 "Quit" [if isFile [cvReleaseImage picture cvReleaseImage &picture cvReleaseImage &greyImg 
 							cvReleaseImage &cannyImg cvReleaseImage &drawnImg 
-							cvReleaseImage &contrastImg] 
+							cvReleaseImage &contrastImg cvReleaseMemStorage storage] 
 	                          quit]
 	] 535x600
 center-face mainwin

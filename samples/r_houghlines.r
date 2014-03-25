@@ -32,7 +32,7 @@ HProba: does [
    lines: cvHoughLines2 &dst storage CV_HOUGH_PROBABILISTIC distance angle threshold param1 param2
    i: 0
     until [
-        line: cvGetSeqElem lines i ; line = pointeur address with 4 values ; increment 16 : ñ¨4 integers of sizeof 4
+        line: cvGetSeqElem lines i ; line = pointeur address with 4 values ; increment 16 : 4 integers of sizeof 4
         ;data: get-memory &line 16 ; 
         pt1/x: to-integer reverse get-memory line + 0 4 ; OK  if not Using an Intel processor do not use reverse
         pt1/y: to-integer reverse get-memory line + 4 4  
@@ -141,7 +141,7 @@ mainwin: layout/size [
 	btn 60 "Process" [if isFile [processImage]]
 	
 	at 985x5 btn 50 "Quit" [if isFile [cvReleaseImage src cvReleaseImage dst 
-	                          cvReleaseImage colorSrc cvReleaseImage colorDst free-mem storage] 
+	                          cvReleaseImage colorSrc cvReleaseImage colorDst cvReleaseMemStorage storage] 
 	                          quit]
 	space 0x0
     at 5x30 rimage1: image 512x512 black frame blue
