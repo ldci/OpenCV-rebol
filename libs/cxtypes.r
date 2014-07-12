@@ -172,15 +172,22 @@ IplROI!: make struct! [
     height				[integer!]
 ] none
 
-
+; 
 IplImage!: make struct! compose/deep/only [
+	[save]													; specific to rebol to inhibe GC ;
     nSize 				[integer!]							; sizeof(IplImage)
     ID 					[integer!]							; version (=0)
     nChannels 			[integer!]							; Most of OpenCV functions support 1,2,3 or 4 channels
    	alphaChannel 		[integer!]							; Ignored by OpenCV */
     depth 				[integer!]							; Pixel depth in bits: 
-    colorModel 			[integer!]							; Ignored by OpenCV char [4]
-    channelSeq 			[integer!]							; ditto *
+    cm0 				[char!]							    ; colorModel Ignored by OpenCV char [4] RGB
+    cm1					[char!]
+    cm2					[char!]
+    cm3					[char!]
+    cs0		 			[char!]							    ; channelSeq Ignored by OpenCV  char[4] BGR
+    cs1					[char!]
+    cs2					[char!]
+    cs3					[char!]
     dataOrder 			[integer!]							; 0 - interleaved color channels, 1 - separate color channels.
     origin 				[integer!]							; 0 - top-left origin, 1 - bottom-left origin (Windows bitmaps style). 
     align 				[integer!]							; Alignment of image rows (4 or 8).OpenCV ignores it and uses widthStep instead.
@@ -193,13 +200,20 @@ IplImage!: make struct! compose/deep/only [
     imageSize 			[integer!]							; Image data size in bytes
     imageData 			[int]; [char*]						; Pointer to aligned image data.     
     widthStep 			[integer!]							; Size of aligned image row in bytes.    
-    BorderMode 			[integer!]							; Ignored by OpenCV.                     
-    BorderConst 		[integer!]							; Ditto.                                
+    bm0		 			[integer!]							; BorderMode  int  BorderMode[4] array of 4integer Ignored by OpenCV.                     
+    bm1		 			[integer!]
+    bm2		 			[integer!]
+    bm3		 			[integer!]
+    bc0			 		[integer!]							; BorderConstDitto.     
+    bc1		 			[integer!]
+    bc2		 			[integer!]
+    bc3		 			[integer!]                           
     imageDataOrigin		[int]	    						; Pointer to very origin of image data 
 ] none 
 
 
 IplConvKernel!: make struct! [
+	[save]													; specific to rebol to inhibe GC
 	nCols 				[integer!]
     nRows 				[integer!]
     anchorX 			[integer!]
@@ -209,6 +223,7 @@ IplConvKernel!: make struct! [
 ] none
 
 IplConvKernelFP!: make struct! [
+	[save]													; specific to rebol to inhibe GC
 	nCols 				[integer!]
     nRows 				[integer!]
     anchorX 			[integer!]
@@ -265,15 +280,18 @@ CV_32F: 				5
 CV_64F: 				6
 CV_USRTYPE1: 			7
 
-CV_MAT_DEPTH_MASK: 		CV_DEPTH_MAX - 1
-CV_MAT_DEPTH: func [flags] [flags and CV_MAT_DEPTH_MASK]
-CV_MAKETYPE: func [depth [integer!] cn [integer!]] [(CV_MAT_DEPTH depth + cn - 1) shift/left 1 CV_CN_SHIFT]
+CV_MAT_DEPTH_MASK: 		CV_DEPTH_MAX - 1 ; OK 7
+CV_MAT_DEPTH: func [flags] [flags and CV_MAT_DEPTH_MASK]  ; OK
+CV_MAKETYPE: func [depth [integer!] cn [integer!]] [
+	(CV_MAT_DEPTH depth) + shift/left (cn - 1) CV_CN_SHIFT
+] ; OK
+
 
 ;alias 'CV_MAKETYPE "CV_MAKE_TYPE"
 
 CV_8UC2: CV_MAKETYPE CV_8U 2
 
-n: make integer!
+n: make integer! 0
 CV_8UC1: 					CV_MAKETYPE CV_8U 1
 CV_8UC2: 					CV_MAKETYPE CV_8U 2
 CV_8UC3: 					CV_MAKETYPE CV_8U 3
@@ -320,9 +338,10 @@ CV_MAT_CONT_FLAG:       	(shift/left 1 CV_MAT_CONT_FLAG_SHIFT )
 CV_MAT_TEMP_FLAG_SHIFT:  	15
 CV_MAT_TEMP_FLAG:        	shift/left 1 CV_MAT_TEMP_FLAG_SHIFT 
 
+
 ; Macros -> Func in rebol
 CV_MAT_CN: 		func [flags] [1 + shift (flags and CV_MAT_CN_MASK) CV_CN_SHIFT]  
-CV_MAT_TYPE: 	func [flags] [ flags and CV_MAT_TYPE_MASK]
+CV_MAT_TYPE: 	func [flags] [flags and CV_MAT_TYPE_MASK]
 CV_IS_MAT_CONT: func [flags] [flags and CV_MAT_CONT_FLAG]
 CV_IS_TEMP_MAT: func [flags] [flags AND CV_MAT_TEMP_FLAG]
 
@@ -331,6 +350,7 @@ CV_MAT_MAGIC_VAL:    		to-integer #42420000
 CV_TYPE_NAME_MAT:    		"opencv-matrix"
 
 CvMat!: make struct! [
+	[save]													; specific to rebol to inhibe GC
 	type 			[integer!]		; CvMat signature (CV_MAT_MAGIC_VAL), element type and flags 
 	step 			[integer!]		; full row length in bytes
 	;for internal use only 
@@ -371,17 +391,21 @@ CV_ARE_SIZES_EQ: func [mat1 mat2][(mat1/rows = mat2/rows) AND (mat1/cols = mat2/
 
 CV_IS_MAT_CONST: func [mat] [mat/rows XOR mat/cols = 1]
 
-CV_ELEM_SIZE1: func [type /local size_t l][ 
-	size_t: sizeof to-word type? type
-	l: shift/left size_t 28 OR 138682897
+CV_ELEM_SIZE1: func [type /local l][ 
+	l: shift/left size_t (28 OR 138682897)
 	shift l (((CV_MAT_DEPTH type) * 4) and 15)
 ]
 
-CV_ELEM_SIZE: func [type /local tmp size_t l][
-	tmp: CV_MAT_CN type
-	size_t: sizeof to-word type? type
-	l: shift/left (CV_MAT_CN type) (((size_t / 4) * 1 * 16384) OR 14928)
-	shift l (((CV_MAT_DEPTH type) * 2) AND 3)
+;(CV_MAT_CN(type) << ((((sizeof(size_t)/4+1)*16384|0x3a50) >> CV_MAT_DEPTH(type)*2) & 3))
+
+CV_ELEM_SIZE: func [type /local v0 v1 v2 v3 l][
+	v0: sizeof 'decimal!
+	v1: CV_MAT_CN type
+	v2: ((v0 / 4 + 1) * 16384) or  14928
+	v3: (CV_MAT_DEPTH type) * 2  and 3
+	l: shift/left v1 v2
+	(shift l v3) / 8192  ; power 2 13 ; REBOL????
+	
 ]
 
 {inline constructor. No data is allocated internally!!!
@@ -391,62 +415,76 @@ get a matrix with allocated data)}
 {This is a slight modification of orignal version : we directly use a binary string to be stored as pointer in m/data
 To get back value use get-memory m/data size}
 
+;binary!
 
 cvMat: func  [rows [integer!] cols [integer!] type [integer!] data [binary!]] [
 	m: make struct! cvMat! none
+	ptr: make struct! int-ptr! none
 	assert [m/type and  CV_MAT_DEPTH_MASK <= CV_64F]
 	m/type: CV_MAT_MAGIC_VAL OR CV_MAT_CONT_FLAG OR type 
 	m/cols: cols;
     m/rows: rows
-    either rows > 1 [m/step: m/cols * CV_ELEM_SIZE type ][m/step: 0]
+    m/step: m/cols * CV_ELEM_SIZE m/type 
     m/data: string-address? data
-    m/refcount: 0;
-   	m/hdr_refcount: 0;
+    m/refcount: struct-address? ptr; null ptr
+   	m/hdr_refcount: 1;
    	m
 ]
 
 CV_MAT_ELEM_PTR_FAST: func [mat row [integer!] col [integer!] pix_size [integer!]][
-	size: sizeof to-word type? (mat/step) 
 	assert [(row < mat/rows) AND (col < mat/cols)] 
-	mat/data + (size * row) + (pix_size * col)	
+	mat/data + (mat/step * row) + (pix_size * col)	
 ]
 
 CV_MAT_ELEM_PTR: func [mat row [integer!] col [integer!]][ 
 	CV_MAT_ELEM_PTR_FAST mat row col CV_ELEM_SIZE mat/type
 ]
 
-CV_MAT_ELEM: func [mat elemtype [integer!] row [integer!] col [integer!]][
- 	size: sizeof to-word type? (elemtype) 
-	return CV_MAT_ELEM_PTR_FAST mat row col size
-]
-
-cvmGet: func [mat row [integer!] col [integer!] /local type size_t] [
-	type: CV_MAT_TYPE mat/type
-	size_t: sizeof to-word type? mat/step * row
-	assert [(row < mat/rows) AND (col < mat/cols)]
-	offset: (mat/step * row)  + (col * size_t) + (size_t * row)
-	adr: mat/data + offset
-	if (type = CV_32FC1) OR (type = CV_64FC1)  [s: get-memory adr size_t]
+CV_MAT_ELEM: func [mat elemtype [integer!] row [integer!] col [integer!] /local size adr][
+ 	size: mat/step / mat/cols; sizeof to-word type? (elemtype) 
+ 	
+	adr: CV_MAT_ELEM_PTR_FAST mat row col size
+	s: get-memory adr size
 	to-decimal to-string trim s
 ]
 
-cvmSet: func [mat row [integer!] col [integer!] value [decimal!] /local type size_t adr ][	
+cvmGet: func [mat row [integer!] col [integer!] /local type wsize] [
 	type: CV_MAT_TYPE mat/type
-	size_t: sizeof to-word type? mat/step * row
 	assert [(row < mat/rows) AND (col < mat/cols)]
-	offset: (mat/step * row)  + (col * size_t) + (size_t * row) ; OK for offset
+	;((float*)(mat->data.ptr + (size_t)mat->step*row))[col] = (float)value;
+	wsize: mat/step / mat/cols
+	offset: (mat/step * row)  + (col * wsize)  ; OK for offset
 	adr: mat/data + offset
-	if (type = CV_32FC1) OR (type = CV_64FC1)  [set-memory adr to-binary value]
+	;if (type = CV_32FC1) OR (type = CV_64FC1)  [s: get-memory adr size_t]
+	s: get-memory adr wsize
+	to-decimal to-string trim s
+]
+
+cvmSet: func [mat row [integer!] col [integer!] value [decimal!] /local type adr wsize ][	
+	type: CV_MAT_TYPE mat/type
+	assert [(row < mat/rows) AND (col < mat/cols)]
+	wsize: mat/step / mat/cols
+	offset: (mat/step * row)  + (col * wsize)  ; OK for offset
+	adr: mat/data + offset
+	;if (type = CV_32FC1) OR (type = CV_64FC1)  [set-memory adr to-binary value]
+	set-memory adr to-binary value
 ]
 
 
-cvCvToIplDepth: func [type [integer!] /local depth val ] [
+;CV_INLINE int cvCvToIplDepth( int type )
+{
+    int depth = CV_MAT_DEPTH(type);
+    return CV_ELEM_SIZE1(depth)*8 | (depth == CV_8S || depth == CV_16S ||
+           depth == CV_32S ? IPL_DEPTH_SIGN : 0);
+}
+
+; pb with IPL_DEPTH_SIGN: negative
+cvCvToIplDepth: func [type [integer!] /local depth val tmp ] [
+	tmp: 0
 	depth: CV_MAT_DEPTH type
-	val: 0
-	either depth = CV_8S [val: IPL_DEPTH_SIGN] [val: 0]
-	either depth = CV_16S [val: IPL_DEPTH_SIGN] [val: 0]
-	either depth = CV_32S [val: IPL_DEPTH_SIGN] [val: 0]
-    val 
+	tmp: CV_8S OR CV_16S OR CV_32S
+	either tmp <> 0 [val: IPL_DEPTH_SIGN] [val: 0]
+    (CV_ELEM_SIZE1 (depth) * 8) or Val
 ]
 
 ;/****************************************************************************************\
@@ -460,6 +498,7 @@ CV_MAX_DIM_HEAP:                shift/left 1 16
 
 
 CvMatND!: make struct! compose/deep/only [
+	[save]		 				; specific to rebol to inhibe GC
 	type 		 [integer!]
 	dims 		 [integer!]
 	refcount	 [int]         	; internal use
@@ -493,6 +532,7 @@ CV_TYPE_NAME_SPARSE_MAT:    "opencv-sparse-matrix"
 
 
 CvSparseMat!: make struct!  [
+	[save]													; specific to rebol to inhibe GC
 	type 			[integer!]
 	dims 			[integer!]
 	refcount		[integer!]
@@ -560,6 +600,7 @@ CV_NODE_IDX: func [mat	node][
 
 ; mat is not a pointer but a structure. Mat must be initialised 
 CvHistogram!: make struct! compose/deep/only  [
+	[save]													; specific to rebol to inhibe GC
     type 			[integer!];
     bins 			[int]; ** pointer to CvArr!
     thresh			[int] ; pointer to float array [CV_MAX_DIM][2]; /* for uniform histograms */

@@ -25,15 +25,15 @@ cvImage: make object![
     ]
     cvload: func [color] [
     	img: cvLoadImage windowsName color 
-    	&img: as-pointer! img
+    	&img: as-byte-ptr! img
     	; we use a copie to test cvGetRawData
     	
     	if isTest [
 			copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
-			&copie: as-pointer! 
+			&copie: as-byte-ptr! 
 			cvZero &copie
-	    	&step as-int! img/widthStep
-	    	&data: as-int! img/imageSize
+	    	&step as-int-ptr! img/widthStep
+	    	&data: as-int-ptr! img/imageSize
 	    	roi: make struct! cvSize! reduce [0 0]
 			cvGetRawData &img &data &step roi
 	    	data: get-memory  &data img/imageSize		;get the data
@@ -99,8 +99,8 @@ cvImage: make object![
 		append console/text rejoin [ "image nChannels: " img/nChannels newline]
 		append console/text rejoin [ "image alphaChannel: " img/alphaChannel newline]
 		append console/text rejoin [ "image depth: " img/depth newline]
-		append console/text rejoin [ "image color model: " img/ColorModel newline] ; img/ColorModel Ignored by OpenCV
-		append console/text rejoin [ "image channel Seq: " img/channelSeq newline] ; img/channelSeq Ignored by OpenCV 
+		append console/text rejoin [ "image color model: " img/cm0 img/cm1 img/cm2 img/cm3 newline] ; img/ColorModel Ignored by OpenCV
+		append console/text rejoin [ "image channel Seq: " img/cs0 img/cs1 img/cs2 img/cs3 newline] ; img/channelSeq Ignored by OpenCV 
 		append console/text rejoin [ "image data order: " img/dataOrder newline]
 		append console/text rejoin [ "image origin: " img/origin newline]
 		append console/text rejoin [ "image align: " img/align newline]
@@ -118,10 +118,12 @@ cvImage: make object![
 		append console/text rejoin [ "image size: " img/imageSize newline]
 		append console/text rejoin [ "image data: " img/imageData newline]
 		append console/text rejoin [ "image widthStep: " img/widthStep newline]
-		append console/text rejoin [ "image borderMode: "  img/borderMode newline] ;img/borderMode Ignored by OpenCV" 
-		append console/text rejoin [ "image borderConst: " img/borderConst newline] ;img/borderConstIgnored by OpenCV" 
+		append console/text rejoin [ "image borderMode: "  img/bm0 img/bm1 img/bm2 img/bm3 newline] ;img/borderMode Ignored by OpenCV" 
+		append console/text rejoin [ "image borderConst: " img/bc0  img/bc1 img/bc2 img/bc3 newline] ;img/borderConstIgnored by OpenCV" 
 		append console/text rejoin [ "image imageDataOrigin: " img/imageDataOrigin newline]
 		show console
+		
+		
     ]
     
     cvtoRebol: func [dest] [

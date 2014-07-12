@@ -118,6 +118,7 @@ sizeof: func [
 		length? third make struct! compose/deep [value [(datatype)]] none
 ]
 
+
 string-address?: func [
 		{get the address of the given string}
 		string [any-string!]
@@ -127,7 +128,7 @@ string-address?: func [
 	    str: make struct! char* none
 		str/buffer: string
 		change third ptr third str
-		ptr/int
+		ptr/value
 	]
 
 
@@ -149,21 +150,6 @@ struct-address?: func [
 		string-address? third struct
 	]
 
-;some specific functions I added for pointers
-
-as-pointer!: func [struct [struct!]] [
-	struct-address? struct
-]
-
-as-int!: func [value [integer!] /& /local p][
-	p: make struct! int-ptr! reduce [value]
-	either & [return struct-address? p] [p]
-]
-
-as-float!: func [value [decimal!] /& /local p] [
-	p: make struct! float-ptr! reduce [value]
-	either & [return struct-address? p] [p]
-]
 
 	
 ; specific for binary (char-array)
@@ -194,7 +180,7 @@ set-memory: func [
 		foreach char as-string contents [
 			change third pStruct third ptr
 			pStruct/struct/c: char
-			ptr/int: ptr/int + 1
+			ptr/value: ptr/value + 1
 		]
 ]
 
@@ -301,7 +287,7 @@ __convert: func [
 						s [struct! [[save] value [(type)]]]
 					] none
 					size: length? third struct/s
-					ptr/int: from
+					ptr/value: from
 					change third struct third ptr
 					append result struct/s/value
 					from: from + size
@@ -313,6 +299,28 @@ __convert: func [
 
 
 
+;some specific functions I added for pointers
+
+as-pointer!: func [struct [struct!]] [
+	struct-address? struct
+]
+
+; to be coherent with red/system as byte-ptr! 
+as-byte-ptr!: func [struct [struct!]] [
+	struct-address? struct
+]
+
+; pointer sur entier 
+as-int-ptr!: func [value [integer!] /& /local p][
+	p: make struct! int-ptr! reduce [value]
+	either & [return struct-address? p] [p]
+]
+
+;pointer sur float
+as-float-ptr!: func [value [decimal!] /& /local p] [
+	p: make struct! float-ptr! reduce [value]
+	either & [return struct-address? p] [p]
+]
 
 
 
@@ -329,13 +337,13 @@ cvSavetoRebol: func [src dest] [
 cvtoRebol: func [src dest] [
     ;  get data from image with cvRawdata	
 	
-	&step: as-int!/& src/widthStep
+	&step: as-int-ptr!/& src/widthStep
 	data: make struct! int-ptr! reduce [src/imageSize]
 	&data: struct-address? data 
 	roi: make struct! cvSize! reduce [0 0]
 	&src: as-pointer! src
 	cvGetRawData &src &data &step roi
-	&data: data/int          					; get the pointer adress in return
+	&data: data/value          					; get the pointer adress in return
 	data: get-memory  &data src/imageSize		;get the data
 	
 	; rebol version slower
@@ -392,7 +400,7 @@ _cvtoRebol: func [src dest] [
 	roi: make struct! cvSize! reduce [0 0]
 
 	cvGetRawData imageNC &data &step roi
-	&data: data/int          						; get the pointer adress in return
+	&data: data/value          						; get the pointer adress in return
 	data: get-memory  &data imageNC/imageSize		;get the data
 	
     ; reverse BGRA order to RBGA
@@ -473,15 +481,115 @@ tocvFloatRGB: func [color [tuple!] /local divider] [
 ;This function is really useful to get the values of an IplImage structure
 ; second src provokes a serious error if src/roi= 0  since roi is an imbricated structure
 
-getIPLValues: func [src /address] [
+_getIPLValues: func [src /address] [
     bValues: copy []
      ; values changed by routines are here 
      ; int or struct 
-    either address [str: get-memory src 88] [str: copy third src]
+    either address [str: get-memory src 112] [str: copy third src]
 	while [not tail? str] [
 		p: to-integer reverse copy/part str 4
 		append bValues p
 		str: skip str 4
 	]
+	bValues
+]
+
+
+getIPLValues: func [src /address] [
+    bValues: copy []
+     ; values changed by routines are here 
+     ; int or struct 
+    either address [str: get-memory src 112] [str: copy third src]
+    
+    
+    ;sizeof image
+    ; identification
+    ; number of channels
+    ;alpha channel
+    ;depth
+    for i 1 5 1 [
+    	p: to-integer reverse copy/part str 4
+		append bValues p
+		str: skip str 4
+    ]
+    
+	; color Model 4 char
+	cm: ""
+	for i 1 4 1 [
+		p: to-integer reverse copy/part str 1
+		append cm to-char p
+		str: skip str 1
+	]
+	append bValues cm
+	
+	; Channel sequence 4 char
+	cm: ""
+	
+	for i 1 4 1 [
+		p: to-integer reverse copy/part str 1
+		append cm to-char p
+		str: skip str 1
+	]
+	append bValues cm
+	
+	
+	;data order
+	;origin
+	; alignment
+	;width
+	;height
+	
+	
+	for i 1 5 1 [
+		p: to-integer reverse copy/part str 4
+		append bValues p
+		str: skip str 4
+	]
+	
+	; roi
+	; mask roi
+	; image ID
+	; Tile Info
+	
+	for i 1 4 1 [
+		p: to-integer reverse copy/part str 4
+		either p = 0 [append bValues "none!"] [append bValues p]
+		str: skip str 4
+	]
+	
+	
+	
+	;image Size
+	;image data
+	;width step
+	for i 1 3 1 [
+		p: to-integer reverse copy/part str 4
+		append bValues p
+		str: skip str 4
+	]
+	
+	; border Mode
+	cm: ""
+	for i 1 4 1 [
+		p: to-integer reverse copy/part str 4
+		append cm  p
+		str: skip str 4
+	]
+	append bValues cm
+	
+	; border constante
+	cm: ""
+	for i 1 4 1 [
+		p: to-integer reverse copy/part str 4
+		append cm  p
+		str: skip str 4
+	]
+	append bValues cm
+	
+	;pointer to origin of image data
+	
+	p: to-integer reverse copy/part str 4
+	either p = 0 [append bValues "none!"] [append bValues p]
+	
 	bValues
 ]
