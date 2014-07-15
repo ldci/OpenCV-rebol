@@ -7,7 +7,7 @@ REBOL [
 ]
 do %../opencv.r
 set 'appDir what-dir 
-picture:  to-string to-local-file join appDir "images/lena.tiff"
+picture:  to-string to-local-file join appDir  "images/lena.tiff"; "images/lena.tiff"
 
 ;print "Select a picture"
 
@@ -29,7 +29,7 @@ mouseEvent: func [
 ]
  
 cvStartWindowThread  ; own's window thread 
-&p: as-int! 0  ; for trackbar position 
+&p: as-int-ptr! 0  ; for trackbar position 
 
 windowsName: "What a Wonderful World!"
 print "Loading a tiff image"
@@ -46,19 +46,19 @@ cvSetMouseCallBack windowsName :mouseEvent none
 ;load image 
 
 img: cvLoadImage picture CV_LOAD_IMAGE_COLOR
-&img: as-pointer! img
+&img: as-byte-ptr! img
 cvShowImage windowsName &img ; show image
 copie: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
-&copie: as-pointer! copie
+&copie: as-byte-ptr! copie
 cvZero &copie
 ; to get data from orginal image with rawdata	
-&step: as-int!/& img/widthStep
+&step: as-int-ptr!/& img/widthStep
 data: make struct! int-ptr! reduce [img/imageSize]
-&data: as-pointer! data 
+&data: as-byte-ptr! data 
 roi: make struct! cvSize! reduce [img/width img/height]
 
 cvGetRawData &img &data &step roi
-&data: data/int          					; get the pointer adress in return
+&data: data/value          					; get the pointer adress in return
 data: get-memory  &data img/imageSize		;get the data
 cvSetData &copie &data img/widthStep			;now use SetData to make a copy of image !
 ;set-memory copie/imageData data			; this can also be done but slower (rebol)
@@ -74,7 +74,7 @@ print "Use cvGetRawData to make a new image"
 
 ; test cvCopy OK
 copie2: cvCreateImage img/width img/height img/depth img/nChannels ;IPL_DEPTH_8U 1;
-&copie2: as-pointer! copie2
+&copie2: as-byte-ptr! copie2
 cvCopy &img &copie2 none
 
 cvNamedWindow "copie2" CV_WINDOW_AUTOSIZE
@@ -109,6 +109,7 @@ cvWaitKey 0
 print ["Saving the image in jpg"]
 cvSaveImage to-string to-local-file join appDir "images/image.jpg" &img ; save tiff as jpg
 print ["done! Bye "]
+
 
 cvDestroyWindow windowsName       
 free-mem &p	;release trackbar pointer
